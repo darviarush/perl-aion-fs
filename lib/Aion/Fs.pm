@@ -25,7 +25,7 @@ sub include(;$) {
 
 # Текущий путь в exec и replace
 our $PATH;
-sub PATH() :lvalue {$PATH}
+sub PATH() {$PATH}
 
 # как mkdir -p
 use constant FILE_EXISTS => 17;
@@ -127,8 +127,7 @@ sub noenter(&@) {
 sub replace(&@) {
     my $fn = shift;
 	my @noreplace; local($_, $PATH);
-    for my $path (@_) {
-		$PATH = $path;
+    for $PATH (@_) {
         my $file = $_ = cat;
         $fn->();
 		if($file ne $_) {lay} else {push @noreplace, $PATH}
@@ -199,23 +198,24 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 	use Aion::Fs;
 	
 	lay mkpath "hello/world.txt", "hi!";
+	lay mkpath "hello/moon.txt", "noreplace";
 	lay mkpath "hello/big/world.txt", "hellow!";
-	lay mkpath "hello/small/world.txt", "hellow!";
-	
+	lay mkpath "hello/small/world.txt", "noenter";
 	
 	my @noreplaced = replace { s/h/${\ PATH} H/ }
-	    find "hello", "-f", "**.txt",
+	    find "hello", "-f", "*.txt", qr/\.txt$/,
 	        noenter { PATH =~ wildcard "*small*" };
 	
-	\@noreplaced # --> ["hello/small/world.txt"]
+	\@noreplaced # --> ["hello/moon.txt"]
 	
 	cat "hello/world.txt"       # => hello/world.txt Hi!
+	cat "hello/moon.txt"        # => noreplace
 	cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!
-	cat "hello/small/world.txt" # => hellow!
+	cat "hello/small/world.txt" # => noenter
 	
-	scalar find "hello"  # -> 6
+	scalar find "hello"  # -> 7
 	
-	[find "hello", "*.txt"]  # --> [qw!  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]
+	[find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]
 	[find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]
 	
 	erase reverse find "hello";
@@ -239,9 +239,9 @@ The current path in C<replace> and C<noenter> blocks. It use if not specified in
 
 It is modifiable:
 
-	local PATH = "path1";
+	local $Aion::Fs::PATH = "path1";
 	{
-	    local PATH = "path2";
+	    local $Aion::Fs::PATH = "path2";
 	    PATH  # => path2
 	}
 	PATH  # => path1
@@ -255,10 +255,10 @@ Read file. If file not specified, then use C<PATH>.
 C<cat> using std-layers from C<use open qw/:std/>. Example, if set layer C<:utf8>, bat file need read in binary, then use C<cat> in block with C<:raw> std-layer:
 
 	lay "unicode.txt", "↯";
-	length cat "unicode.txt"    # -> 1
-	{use open IN => ':raw';
-	    length cat "unicode.txt"    # -> 2
-	}
+	length cat "unicode.txt"         # -> 1
+	utf8::is_utf8 cat "unicode.txt"  # -> 1
+	
+	#length cat "unicode.txt"     # -> 3
 
 =head2 lay ($file, $content)
 
@@ -342,7 +342,7 @@ File lib/A.pm:
 
 Read the file in first call with this file. Any call with this file return C<undef>. Using for insert js and css modules in the resulting file.
 
-	local PATH = "catonce.txt";
+	local $Aion::Fs::PATH = "catonce.txt";
 	local $_ = "result";
 	lay;
 	catonce  # -> $_

@@ -12,23 +12,24 @@ subtest 'SYNOPSIS' => sub {
 use Aion::Fs;
 
 lay mkpath "hello/world.txt", "hi!";
+lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
-lay mkpath "hello/small/world.txt", "hellow!";
-
+lay mkpath "hello/small/world.txt", "noenter";
 
 my @noreplaced = replace { s/h/${\ PATH} H/ }
-    find "hello", "-f", "**.txt",
+    find "hello", "-f", "*.txt", qr/\.txt$/,
         noenter { PATH =~ wildcard "*small*" };
 
-::is_deeply scalar do {\@noreplaced}, scalar do {["hello/small/world.txt"]}, '\@noreplaced # --> ["hello/small/world.txt"]';
+::is_deeply scalar do {\@noreplaced}, scalar do {["hello/moon.txt"]}, '\@noreplaced # --> ["hello/moon.txt"]';
 
 ::is scalar do {cat "hello/world.txt"}, "hello/world.txt Hi!", 'cat "hello/world.txt"       # => hello/world.txt Hi!';
+::is scalar do {cat "hello/moon.txt"}, "noreplace", 'cat "hello/moon.txt"        # => noreplace';
 ::is scalar do {cat "hello/big/world.txt"}, "hello/big/world.txt Hellow!", 'cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!';
-::is scalar do {cat "hello/small/world.txt"}, "hellow!", 'cat "hello/small/world.txt" # => hellow!';
+::is scalar do {cat "hello/small/world.txt"}, "noenter", 'cat "hello/small/world.txt" # => noenter';
 
-::is scalar do {scalar find "hello"}, scalar do{6}, 'scalar find "hello"  # -> 6';
+::is scalar do {scalar find "hello"}, scalar do{7}, 'scalar find "hello"  # -> 7';
 
-::is_deeply scalar do {[find "hello", "*.txt"]}, scalar do {[qw!  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]}, '[find "hello", "*.txt"]  # --> [qw!  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]';
+::is_deeply scalar do {[find "hello", "*.txt"]}, scalar do {[qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]}, '[find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]';
 ::is_deeply scalar do {[find "hello", "-d"]}, scalar do {[qw!  hello  hello/big hello/small  !]}, '[find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]';
 
 erase reverse find "hello";
@@ -54,9 +55,9 @@ erase reverse find "hello";
 # It is modifiable:
 # 
 done_testing; }; subtest 'PATH ()' => sub { 
-local PATH = "path1";
+local $Aion::Fs::PATH = "path1";
 {
-    local PATH = "path2";
+    local $Aion::Fs::PATH = "path2";
 ::is scalar do {PATH}, "path2", '    PATH  # => path2';
 }
 ::is scalar do {PATH}, "path1", 'PATH  # => path1';
@@ -74,11 +75,10 @@ done_testing; }; subtest 'cat ($file)' => sub {
 # 
 
 lay "unicode.txt", "↯";
-::is scalar do {length cat "unicode.txt"}, scalar do{1}, 'length cat "unicode.txt"    # -> 1';
-{use open IN => ':raw';
-::is scalar do {length cat "unicode.txt"}, scalar do{2}, '    length cat "unicode.txt"    # -> 2';
-}
+::is scalar do {length cat "unicode.txt"}, scalar do{1}, 'length cat "unicode.txt"         # -> 1';
+::is scalar do {utf8::is_utf8 cat "unicode.txt"}, scalar do{1}, 'utf8::is_utf8 cat "unicode.txt"  # -> 1';
 
+#length cat "unicode.txt"     
 # 
 # ## lay ($file, $content)
 # 
@@ -145,7 +145,7 @@ done_testing; }; subtest 'include ($pkg)' => sub {
 # Read the file in first call with this file. Any call with this file return `undef`. Using for insert js and css modules in the resulting file.
 # 
 done_testing; }; subtest 'catonce ($file)' => sub { 
-local PATH = "catonce.txt";
+local $Aion::Fs::PATH = "catonce.txt";
 local $_ = "result";
 lay;
 ::is scalar do {catonce}, scalar do{$_}, 'catonce  # -> $_';
