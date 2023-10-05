@@ -146,7 +146,8 @@ Time modification the `$file` in unixtime.
 Raise exeception if file not exists, or not permissions:
 
 ```perl
-eval { mtime "nofile" }; $@  # ~> mtime nofile: No such file or directory
+local $Aion::Fs::PATH = "nofile";
+eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 ```
 
 ## replace (&sub, @files)
@@ -190,6 +191,8 @@ local $_ = "result";
 lay;
 catonce  # -> $_
 catonce  # -> undef
+
+eval { catonce[] }; $@ # ~> catonce not use ref path!
 ```
 
 ## wildcard ($wildcard)

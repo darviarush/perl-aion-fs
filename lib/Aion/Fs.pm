@@ -74,6 +74,7 @@ our %FILE_INC;
 sub catonce (;$) {
 	my ($file) = @_;
 	$file = $PATH if @_ == 0;
+	die "catonce not use ref path!" if ref $file;
 	return undef if exists $FILE_INC{$file};
 	$FILE_INC{$file} = 1;
 	cat($file)
@@ -344,7 +345,8 @@ Time modification the C<$file> in unixtime.
 
 Raise exeception if file not exists, or not permissions:
 
-	eval { mtime "nofile" }; $@  # ~> mtime nofile: No such file or directory
+	local $Aion::Fs::PATH = "nofile";
+	eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 
 =head2 replace (&sub, @files)
 
@@ -384,6 +386,8 @@ Read the file in first call with this file. Any call with this file return C<und
 	lay;
 	catonce  # -> $_
 	catonce  # -> undef
+	
+	eval { catonce[] }; $@ # ~> catonce not use ref path!
 
 =head2 wildcard ($wildcard)
 

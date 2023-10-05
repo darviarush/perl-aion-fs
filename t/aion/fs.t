@@ -146,7 +146,8 @@ $Aion::Fs::PATH = ["A", 0755];
 # Raise exeception if file not exists, or not permissions:
 # 
 done_testing; }; subtest 'mtime ($file)' => sub { 
-::like scalar do {eval { mtime "nofile" }; $@}, qr!mtime nofile: No such file or directory!, 'eval { mtime "nofile" }; $@  # ~> mtime nofile: No such file or directory';
+local $Aion::Fs::PATH = "nofile";
+::like scalar do {eval { mtime }; $@}, qr!mtime nofile: No such file or directory!, 'eval { mtime }; $@  # ~> mtime nofile: No such file or directory';
 
 # 
 # ## replace (&sub, @files)
@@ -190,6 +191,8 @@ local $_ = "result";
 lay;
 ::is scalar do {catonce}, scalar do{$_}, 'catonce  # -> $_';
 ::is scalar do {catonce}, scalar do{undef}, 'catonce  # -> undef';
+
+::like scalar do {eval { catonce[] }; $@}, qr!catonce not use ref path\!!, 'eval { catonce[] }; $@ # ~> catonce not use ref path!';
 
 # 
 # ## wildcard ($wildcard)
