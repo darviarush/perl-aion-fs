@@ -33,7 +33,9 @@ use constant DIR_DEFAULT_PERMISSION => 0755;
 sub mkpath (;$) {
 	my ($path) = @_;
 	$path = $PATH if @_ == 0;
-	mkdir $`, DIR_DEFAULT_PERMISSION or ($! != FILE_EXISTS? die "mkpath $`: $!": ()) while $path =~ m!/!g;
+	my $permission = DIR_DEFAULT_PERMISSION;
+	($path, $permission) = @$path if ref $path;
+	mkdir $`, $permission or ($! != FILE_EXISTS? die "mkpath $`: $!": ()) while $path =~ m!/!g;
 	undef $!;
 	$path
 }
@@ -44,7 +46,9 @@ sub mkpath (;$) {
 sub cat(;$) {
     my ($file) = @_;
 	$file = $PATH if @_ == 0;
-	open my $f, "<", $file or die "cat $file: $!";
+	my $layer = ":utf8";
+	($file, $layer) = @$file if ref $file;
+	open my $f, "<$layer", $file or die "cat $file: $!";
 	read $f, my $x, -s $f;
 	close $f;
 	$x
@@ -57,7 +61,9 @@ sub lay (;$$) {
 	my ($file, $s) = @_;
 	$file = $PATH if @_ == 0;
 	$s = $_ if @_ <= 1;
-	open my $f, ">", $file or die "lay $file: $!";
+	my $layer = ":utf8";
+	($file, $layer) = @$file if ref $file;
+	open my $f, ">$layer", $file or die "lay $file: $!";
 	print $f $s;
 	close $f;
 	$file
@@ -164,7 +170,7 @@ sub wildcard(;$) {
 		exists $+{comma}? "|":
 		quotemeta $&
 	}gxe;
-	qr/$wildcard/s
+	qr/^$wildcard$/s
 }
 
 # Открывает файл на указанной строке в редакторе
@@ -201,6 +207,8 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 	lay mkpath "hello/moon.txt", "noreplace";
 	lay mkpath "hello/big/world.txt", "hellow!";
 	lay mkpath "hello/small/world.txt", "noenter";
+	
+	mtime "hello"  # ~> \d+
 	
 	my @noreplaced = replace { s/h/${\ PATH} H/ }
 	    find "hello", "-f", "*.txt", qr/\.txt$/,
@@ -252,13 +260,15 @@ Read file. If file not specified, then use C<PATH>.
 
 	cat "/etc/passwd"  # ~> root
 
-C<cat> using std-layers from C<use open qw/:std/>. Example, if set layer C<:utf8>, bat file need read in binary, then use C<cat> in block with C<:raw> std-layer:
+C<cat> read with layer C<:utf8>. But you can set the level like this:
 
 	lay "unicode.txt", "↯";
-	length cat "unicode.txt"         # -> 1
-	utf8::is_utf8 cat "unicode.txt"  # -> 1
-	
-	#length cat "unicode.txt"     # -> 3
+	length cat "unicode.txt"            # -> 1
+	length cat["unicode.txt", ":raw"]   # -> 3
+
+C<cat> raise exception by error on io operation:
+
+	eval { cat "A" }; $@  # ~> cat A: No such file or directory
 
 =head2 lay ($file, $content)
 
@@ -270,9 +280,14 @@ Write C<$content> in C<$file>.
 
 =item * If C<$content> not specified, then use C<$_>.
 
-=item * C<cat> using std-layers from C<use open qw/:std/>. For set layer using C<< {use open OUT =E<gt> ':raw'; lay $path } >>.
+=item * C<lay> using layer C<:utf8>. For set layer using:
 
 =back
+
+	lay "unicode.txt", "↯"  # => unicode.txt
+	lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
+	
+	eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
 
 =head2 find ($path, @filters)
 
@@ -302,7 +317,7 @@ Remove files and empty catalogs. Returns the C<@paths>.
 
 No enter to catalogs. Using in C<find>.
 
-=head2 mkpath ($path, $mode)
+=head2 mkpath ($path)
 
 As B<mkdir -p>, but consider last path-part (after last slash) as filename, and not create this catalog.
 
@@ -310,19 +325,32 @@ As B<mkdir -p>, but consider last path-part (after last slash) as filename, and 
 
 =item * If C<$path> not specified, then use C<PATH>.
 
-=item * If C<$mode> not specified, then use permission C<0755>.
+=item * If C<$path> is array ref, then use path as first and permission as second element.
+
+=item * Default permission is C<0755>.
 
 =item * Returns C<$path>.
 
 =back
 
+	$Aion::Fs::PATH = ["A", 0755];
+	mkpath   # => A
+	
+	eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
+
 =head2 mtime ($file)
 
 Time modification the C<$file> in unixtime.
 
+Raise exeception if file not exists, or not permissions:
+
+	eval { mtime "nofile" }; $@  # ~> mtime nofile: No such file or directory
+
 =head2 replace (&sub, @files)
 
 Replacing each the file if C<&sub> replace C<$_>. Returns files in which there were no replacements.
+
+C<@files> can contain arrays of two elements. The first one is treated as a path, and the second one is treated as a layer. Default layer is C<:utf8>.
 
 =head2 include ($pkg)
 
@@ -334,9 +362,18 @@ File lib/A.pm:
 	sub new { bless {@_}, shift }
 	1;
 
+File lib/N.pm:
+
+	package N;
+	sub ex { 123 }
+	1;
 
 
-	include("A")->new  # ~> A=HASH\(0x\w+\)
+
+	use lib "lib";
+	include("A")->new               # ~> A=HASH\(0x\w+\)
+	[map include, qw/A N/]          # --> [qw/A N/]
+	{ local $_="N"; include->ex }   # -> 123
 
 =head2 catonce ($file)
 
@@ -372,7 +409,7 @@ Translate the wildcard to regexp.
 
 =back
 
-	wildcard "*.[pm,pl]"  # \> ^.*\.(pm|pl)$
+	wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
 
 Using in filters the function C<find>.
 
@@ -385,7 +422,7 @@ File .config.pm:
 	package config;
 	
 	config_module 'Aion::Fs' => {
-	    EDITOR => 'echo %f:%l > ed.txt',
+	    EDITOR => 'echo %p:%l > ed.txt',
 	};
 	
 	1;

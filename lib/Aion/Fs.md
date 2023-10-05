@@ -16,6 +16,8 @@ lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
 lay mkpath "hello/small/world.txt", "noenter";
 
+mtime "hello"  # ~> \d+
+
 my @noreplaced = replace { s/h/${\ PATH} H/ }
     find "hello", "-f", "*.txt", qr/\.txt$/,
         noenter { PATH =~ wildcard "*small*" };
@@ -71,14 +73,18 @@ Read file. If file not specified, then use `PATH`.
 cat "/etc/passwd"  # ~> root
 ```
 
-`cat` using std-layers from `use open qw/:std/`. Example, if set layer `:utf8`, bat file need read in binary, then use `cat` in block with `:raw` std-layer:
+`cat` read with layer `:utf8`. But you can set the level like this:
 
 ```perl
 lay "unicode.txt", "↯";
-length cat "unicode.txt"         # -> 1
-utf8::is_utf8 cat "unicode.txt"  # -> 1
+length cat "unicode.txt"            # -> 1
+length cat["unicode.txt", ":raw"]   # -> 3
+```
 
-#length cat "unicode.txt"     # -> 3
+`cat` raise exception by error on io operation:
+
+```perl
+eval { cat "A" }; $@  # ~> cat A: No such file or directory
 ```
 
 ## lay ($file, $content)
@@ -87,7 +93,14 @@ Write `$content` in `$file`.
 
 * If `$file` not specified, then use `PATH`.
 * If `$content` not specified, then use `$_`.
-* `cat` using std-layers from `use open qw/:std/`. For set layer using `{use open OUT => ':raw'; lay $path }`.
+* `lay` using layer `:utf8`. For set layer using:
+
+```perl
+lay "unicode.txt", "↯"  # => unicode.txt
+lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
+
+eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
+```
 
 ## find ($path, @filters)
 
@@ -110,21 +123,37 @@ Remove files and empty catalogs. Returns the `@paths`.
 
 No enter to catalogs. Using in `find`.
 
-## mkpath ($path, $mode)
+## mkpath ($path)
 
 As **mkdir -p**, but consider last path-part (after last slash) as filename, and not create this catalog.
 
 * If `$path` not specified, then use `PATH`.
-* If `$mode` not specified, then use permission `0755`.
+* If `$path` is array ref, then use path as first and permission as second element.
+* Default permission is `0755`.
 * Returns `$path`.
+
+```perl
+$Aion::Fs::PATH = ["A", 0755];
+mkpath   # => A
+
+eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
+```
 
 ## mtime ($file)
 
 Time modification the `$file` in unixtime.
 
+Raise exeception if file not exists, or not permissions:
+
+```perl
+eval { mtime "nofile" }; $@  # ~> mtime nofile: No such file or directory
+```
+
 ## replace (&sub, @files)
 
 Replacing each the file if `&sub` replace `$_`. Returns files in which there were no replacements.
+
+`@files` can contain arrays of two elements. The first one is treated as a path, and the second one is treated as a layer. Default layer is `:utf8`.
 
 ## include ($pkg)
 
@@ -137,8 +166,18 @@ sub new { bless {@_}, shift }
 1;
 ```
 
+File lib/N.pm:
 ```perl
-include("A")->new  # ~> A=HASH\(0x\w+\)
+package N;
+sub ex { 123 }
+1;
+```
+
+```perl
+use lib "lib";
+include("A")->new               # ~> A=HASH\(0x\w+\)
+[map include, qw/A N/]          # --> [qw/A N/]
+{ local $_="N"; include->ex }   # -> 123
 ```
 
 ## catonce ($file)
@@ -167,7 +206,7 @@ Translate the wildcard to regexp.
 * Any symbols translate by `quotemeta`.
 
 ```perl
-wildcard "*.[pm,pl]"  # \> ^.*\.(pm|pl)$
+wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
 ```
 
 Using in filters the function `find`.
@@ -181,7 +220,7 @@ File .config.pm:
 package config;
 
 config_module 'Aion::Fs' => {
-    EDITOR => 'echo %f:%l > ed.txt',
+    EDITOR => 'echo %p:%l > ed.txt',
 };
 
 1;
