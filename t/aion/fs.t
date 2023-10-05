@@ -16,6 +16,8 @@ lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
 lay mkpath "hello/small/world.txt", "noenter";
 
+::like scalar do {mtime "hello"}, qr!\d+!, 'mtime "hello"  # ~> \d+';
+
 my @noreplaced = replace { s/h/${\ PATH} H/ }
     find "hello", "-f", "*.txt", qr/\.txt$/,
         noenter { PATH =~ wildcard "*small*" };
@@ -71,14 +73,19 @@ done_testing; }; subtest 'cat ($file)' => sub {
 ::like scalar do {cat "/etc/passwd"}, qr!root!, 'cat "/etc/passwd"  # ~> root';
 
 # 
-# `cat` using std-layers from `use open qw/:std/`. Example, if set layer `:utf8`, bat file need read in binary, then use `cat` in block with `:raw` std-layer:
+# `cat` read with layer `:utf8`. But you can set the level like this:
 # 
 
 lay "unicode.txt", "↯";
-::is scalar do {length cat "unicode.txt"}, scalar do{1}, 'length cat "unicode.txt"         # -> 1';
-::is scalar do {utf8::is_utf8 cat "unicode.txt"}, scalar do{1}, 'utf8::is_utf8 cat "unicode.txt"  # -> 1';
+::is scalar do {length cat "unicode.txt"}, scalar do{1}, 'length cat "unicode.txt"            # -> 1';
+::is scalar do {length cat["unicode.txt", ":raw"]}, scalar do{3}, 'length cat["unicode.txt", ":raw"]   # -> 3';
 
-#length cat "unicode.txt"     
+# 
+# `cat` raise exception by error on io operation:
+# 
+
+::like scalar do {eval { cat "A" }; $@}, qr!cat A: No such file or directory!, 'eval { cat "A" }; $@  # ~> cat A: No such file or directory';
+
 # 
 # ## lay ($file, $content)
 # 
@@ -86,7 +93,14 @@ lay "unicode.txt", "↯";
 # 
 # * If `$file` not specified, then use `PATH`.
 # * If `$content` not specified, then use `$_`.
-# * `cat` using std-layers from `use open qw/:std/`. For set layer using `{use open OUT => ':raw'; lay $path }`.
+# * `lay` using layer `:utf8`. For set layer using:
+# 
+done_testing; }; subtest 'lay ($file, $content)' => sub { 
+::is scalar do {lay "unicode.txt", "↯"}, "unicode.txt", 'lay "unicode.txt", "↯"  # => unicode.txt';
+::is scalar do {lay ["unicode.txt", ":raw"], "↯"}, "unicode.txt", 'lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt';
+
+::like scalar do {eval { lay "/", "↯" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory';
+
 # 
 # ## find ($path, @filters)
 # 
@@ -109,21 +123,37 @@ lay "unicode.txt", "↯";
 # 
 # No enter to catalogs. Using in `find`.
 # 
-# ## mkpath ($path, $mode)
+# ## mkpath ($path)
 # 
 # As **mkdir -p**, but consider last path-part (after last slash) as filename, and not create this catalog.
 # 
 # * If `$path` not specified, then use `PATH`.
-# * If `$mode` not specified, then use permission `0755`.
+# * If `$path` is array ref, then use path as first and permission as second element.
+# * Default permission is `0755`.
 # * Returns `$path`.
+# 
+done_testing; }; subtest 'mkpath ($path)' => sub { 
+$Aion::Fs::PATH = ["A", 0755];
+::is scalar do {mkpath}, "A", 'mkpath   # => A';
+
+::like scalar do {eval { mkpath "/A/" }; $@}, qr!mkpath : No such file or directory!, 'eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory';
+
 # 
 # ## mtime ($file)
 # 
 # Time modification the `$file` in unixtime.
 # 
+# Raise exeception if file not exists, or not permissions:
+# 
+done_testing; }; subtest 'mtime ($file)' => sub { 
+::like scalar do {eval { mtime "nofile" }; $@}, qr!mtime nofile: No such file or directory!, 'eval { mtime "nofile" }; $@  # ~> mtime nofile: No such file or directory';
+
+# 
 # ## replace (&sub, @files)
 # 
 # Replacing each the file if `&sub` replace `$_`. Returns files in which there were no replacements.
+# 
+# `@files` can contain arrays of two elements. The first one is treated as a path, and the second one is treated as a layer. Default layer is `:utf8`.
 # 
 # ## include ($pkg)
 # 
@@ -136,8 +166,18 @@ lay "unicode.txt", "↯";
 #>> 1;
 #@< EOF
 # 
+# File lib/N.pm:
+#@> lib/N.pm
+#>> package N;
+#>> sub ex { 123 }
+#>> 1;
+#@< EOF
+# 
 done_testing; }; subtest 'include ($pkg)' => sub { 
-::like scalar do {include("A")->new}, qr!A=HASH\(0x\w+\)!, 'include("A")->new  # ~> A=HASH\(0x\w+\)';
+use lib "lib";
+::like scalar do {include("A")->new}, qr!A=HASH\(0x\w+\)!, 'include("A")->new               # ~> A=HASH\(0x\w+\)';
+::is_deeply scalar do {[map include, qw/A N/]}, scalar do {[qw/A N/]}, '[map include, qw/A N/]          # --> [qw/A N/]';
+::is scalar do {{ local $_="N"; include->ex }}, scalar do{123}, '{ local $_="N"; include->ex }   # -> 123';
 
 # 
 # ## catonce ($file)
@@ -166,7 +206,7 @@ lay;
 # * Any symbols translate by `quotemeta`.
 # 
 done_testing; }; subtest 'wildcard ($wildcard)' => sub { 
-::is scalar do {wildcard "*.[pm,pl]"}, '^.*\.(pm|pl)$', 'wildcard "*.[pm,pl]"  # \> ^.*\.(pm|pl)$';
+::is scalar do {wildcard "*.{pm,pl}"}, '(?^us:^.*?\.(pm|pl)$)', 'wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)';
 
 # 
 # Using in filters the function `find`.
@@ -180,7 +220,7 @@ done_testing; }; subtest 'wildcard ($wildcard)' => sub {
 #>> package config;
 #>> 
 #>> config_module 'Aion::Fs' => {
-#>>     EDITOR => 'echo %f:%l > ed.txt',
+#>>     EDITOR => 'echo %p:%l > ed.txt',
 #>> };
 #>> 
 #>> 1;
