@@ -29,7 +29,7 @@ cat "hello/moon.txt"        # => noreplace
 cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!
 cat "hello/small/world.txt" # => noenter
 
-scalar find "hello"  # -> 7
+scalar find ["hello/big", "hello/small"]  # -> 4
 
 [find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]
 [find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]
@@ -114,6 +114,19 @@ Filters may be:
 * Any string interpret function `wildcard` to regexp and the each path test on it.
 
 The paths that have not passed testing by `@filters` are not returned.
+
+If filter -X is unused, then throw exception:
+
+```perl
+eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called
+```
+
+If `find` is impossible to enter the subdirectory, then a warning is issued.
+
+```perl
+mkpath ["example/", 0];
+[find "example"]   # ~> Undefined subroutine &Aion::Fs::h called
+```
 
 ## erase (@paths)
 

@@ -98,7 +98,7 @@ sub find($;@) {
 		push @noenter, $_ when ref $_ eq "Aion::Fs::noenter";
 		push @filters, $_ when ref $_ eq "CODE";
 		push @filters, do { my $re = $_; sub { $PATH =~ $re } } when ref $_ eq "Regexp";
-		push @filters, (eval join "", "sub { ", (join " && ", map "-$_ \$PATH", split //, $1), " }" or die) when /^-([a-z]+)$/;
+		push @filters, eval join "", "sub { ", (join " && ", map "-$_(\$PATH)", split //, $1), " }" when /^-([a-z]+)$/;
 		default { my $re = wildcard(); push @filters, sub { $PATH =~ $re } }
 	}
 
@@ -112,7 +112,10 @@ sub find($;@) {
 		if(-d $PATH) {
 			next FILE if any { $_->() } @noenter;
 
-			opendir my $dir, $PATH or die "find $PATH: $!";
+			opendir my $dir, $PATH or do {
+				warn "find $PATH: $!";
+				next;
+			};
 			my @file;
 			while(readdir $dir) {
 				push @file, "$PATH/$_" unless /^(\.{1,2})\z/n;
@@ -174,6 +177,16 @@ sub wildcard(;$) {
 	qr/^$wildcard$/s
 }
 
+# Ловушка для STDERR
+sub stderrtrap(&) {
+	my $sub = shift;
+	open my $old, ">&", \*STDERR or die "Can't dup STDERR: $!";
+	open \*STDERR, ">", \my $std or die "Can't open memory file: $!";
+	$sub->();
+	close \*STDERR;
+	open my $old, ">&", \*STDERR or die "Can't dup STDERR: $!";
+}
+
 # Открывает файл на указанной строке в редакторе
 use config EDITOR => "vscodium";
 sub goto_editor($$) {
@@ -222,7 +235,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 	cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!
 	cat "hello/small/world.txt" # => noenter
 	
-	scalar find "hello"  # -> 7
+	scalar find ["hello/big", "hello/small"]  # -> 4
 	
 	[find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]
 	[find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]
@@ -309,6 +322,10 @@ Filters may be:
 =back
 
 The paths that have not passed testing by C<@filters> are not returned.
+
+If filter -X is unused, then throw exception:
+
+	eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called
 
 =head2 erase (@paths)
 

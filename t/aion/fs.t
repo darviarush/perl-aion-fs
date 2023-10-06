@@ -29,7 +29,7 @@ my @noreplaced = replace { s/h/${\ PATH} H/ }
 ::is scalar do {cat "hello/big/world.txt"}, "hello/big/world.txt Hellow!", 'cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!';
 ::is scalar do {cat "hello/small/world.txt"}, "noenter", 'cat "hello/small/world.txt" # => noenter';
 
-::is scalar do {scalar find "hello"}, scalar do{7}, 'scalar find "hello"  # -> 7';
+::is scalar do {scalar find ["hello/big", "hello/small"]}, scalar do{4}, 'scalar find ["hello/big", "hello/small"]  # -> 4';
 
 ::is_deeply scalar do {[find "hello", "*.txt"]}, scalar do {[qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]}, '[find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]';
 ::is_deeply scalar do {[find "hello", "-d"]}, scalar do {[qw!  hello  hello/big hello/small  !]}, '[find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]';
@@ -114,6 +114,12 @@ done_testing; }; subtest 'lay ($file, $content)' => sub {
 # * Any string interpret function `wildcard` to regexp and the each path test on it.
 # 
 # The paths that have not passed testing by `@filters` are not returned.
+# 
+# If filter -X is unused, then throw exception:
+# 
+done_testing; }; subtest 'find ($path, @filters)' => sub { 
+::like scalar do {eval { find "example", "-h" }; $@}, qr!Undefined subroutine &Aion::Fs::h called!, 'eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called';
+
 # 
 # ## erase (@paths)
 # 
