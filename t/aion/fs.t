@@ -62,9 +62,9 @@ done_testing; }; subtest 'cat ($file)' => sub {
 # `cat` read with layer `:utf8`. But you can set the level like this:
 # 
 
-lay "unicode.txt", "π";
+lay "unicode.txt", "↯";
 ::is scalar do {length cat "unicode.txt"}, scalar do{1}, 'length cat "unicode.txt"            # -> 1';
-::is scalar do {length cat["unicode.txt", ":raw"]}, scalar do{2}, 'length cat["unicode.txt", ":raw"]   # -> 2';
+::is scalar do {length cat["unicode.txt", ":raw"]}, scalar do{3}, 'length cat["unicode.txt", ":raw"]   # -> 3';
 
 # 
 # `cat` raise exception by error on io operation:
@@ -81,10 +81,10 @@ lay "unicode.txt", "π";
 # * `lay` using layer `:utf8`. For set layer using two elements array for `$file`:
 # 
 done_testing; }; subtest 'lay ($file, $content)' => sub { 
-::is scalar do {lay "unicode.txt", "π"}, "unicode.txt", 'lay "unicode.txt", "π"  # => unicode.txt';
-::is scalar do {lay ["unicode.txt", ":raw"], "π"}, "unicode.txt", 'lay ["unicode.txt", ":raw"], "π"  # => unicode.txt';
+::is scalar do {lay "unicode.txt", "↯"}, "unicode.txt", 'lay "unicode.txt", "↯"  # => unicode.txt';
+::is scalar do {lay ["unicode.txt", ":raw"], "↯"}, "unicode.txt", 'lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt';
 
-::like scalar do {eval { lay "/", "π" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "π" }; $@ # ~> lay /: Is a directory';
+::like scalar do {eval { lay "/", "↯" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory';
 
 # 
 # ## find ($path, @filters)
@@ -201,6 +201,14 @@ use lib "lib";
 ::is scalar do {{ local $_="N"; include->ex }}, scalar do{123}, '{ local $_="N"; include->ex }   # -> 123';
 
 # 
+# ## A::new
+# 
+# Test subroutine.
+# 
+# ## N::ex
+# 
+# Test subroutine.
+# 
 # ## catonce ($file)
 # 
 # Read the file in first call with this file. Any call with this file return `undef`. Using for insert js and css modules in the resulting file.
@@ -228,8 +236,8 @@ lay "result";
 # * Any symbols translate by `quotemeta`.
 # 
 done_testing; }; subtest 'wildcard ($wildcard)' => sub { 
-::is scalar do {wildcard "*.{pm,pl}"}, '(?^us:^.*?\.(pm|pl)$)', 'wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)';
-::is scalar do {wildcard "?_??_**"}, '(?^us:^._[^/]_[^/]*?$)', 'wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)';
+::is scalar do {wildcard "*.{pm,pl}"}, '(?^usn:^.*?\.(pm|pl)$)', 'wildcard "*.{pm,pl}"  # \> (?^usn:^.*?\.(pm|pl)$)';
+::is scalar do {wildcard "?_??_**"}, '(?^usn:^._[^/]_[^/]*?$)', 'wildcard "?_??_**"  # \> (?^usn:^._[^/]_[^/]*?$)';
 
 # 
 # Using in filters the function `find`.

@@ -192,7 +192,7 @@ sub wildcard(;$) {
 		exists $+{comma}? "|":
 		quotemeta $&
 	}gxe;
-	qr/^$wildcard$/s
+	qr/^$wildcard$/ns
 }
 
 # Открывает файл на указанной строке в редакторе
@@ -272,9 +272,9 @@ Read file. If file not specified, then use C<$_>.
 
 C<cat> read with layer C<:utf8>. But you can set the level like this:
 
-	lay "unicode.txt", "π";
+	lay "unicode.txt", "↯";
 	length cat "unicode.txt"            # -> 1
-	length cat["unicode.txt", ":raw"]   # -> 2
+	length cat["unicode.txt", ":raw"]   # -> 3
 
 C<cat> raise exception by error on io operation:
 
@@ -292,10 +292,10 @@ Write C<$content> in C<$file>.
 
 =back
 
-	lay "unicode.txt", "π"  # => unicode.txt
-	lay ["unicode.txt", ":raw"], "π"  # => unicode.txt
+	lay "unicode.txt", "↯"  # => unicode.txt
+	lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
 	
-	eval { lay "/", "π" }; $@ # ~> lay /: Is a directory
+	eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
 
 =head2 find ($path, @filters)
 
@@ -411,6 +411,14 @@ File lib/N.pm:
 	[map include, qw/A N/]          # --> [qw/A N/]
 	{ local $_="N"; include->ex }   # -> 123
 
+=head2 A::new
+
+Test subroutine.
+
+=head2 N::ex
+
+Test subroutine.
+
 =head2 catonce ($file)
 
 Read the file in first call with this file. Any call with this file return C<undef>. Using for insert js and css modules in the resulting file.
@@ -446,8 +454,8 @@ Translate the wildcard to regexp.
 
 =back
 
-	wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
-	wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)
+	wildcard "*.{pm,pl}"  # \> (?^usn:^.*?\.(pm|pl)$)
+	wildcard "?_??_**"  # \> (?^usn:^._[^/]_[^/]*?$)
 
 Using in filters the function C<find>.
 

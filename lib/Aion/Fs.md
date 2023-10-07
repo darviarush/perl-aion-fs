@@ -228,8 +228,8 @@ Translate the wildcard to regexp.
 * Any symbols translate by `quotemeta`.
 
 ```perl
-wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
-wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)
+wildcard "*.{pm,pl}"  # \> (?^usn:^.*?\.(pm|pl)$)
+wildcard "?_??_**"  # \> (?^usn:^._[^/]_[^/]*?$)
 ```
 
 Using in filters the function `find`.

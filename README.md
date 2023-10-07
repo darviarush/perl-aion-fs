@@ -63,9 +63,9 @@ cat "/etc/passwd"  # ~> root
 `cat` read with layer `:utf8`. But you can set the level like this:
 
 ```perl
-lay "unicode.txt", "π";
+lay "unicode.txt", "↯";
 length cat "unicode.txt"            # -> 1
-length cat["unicode.txt", ":raw"]   # -> 2
+length cat["unicode.txt", ":raw"]   # -> 3
 ```
 
 `cat` raise exception by error on io operation:
@@ -82,10 +82,10 @@ Write `$content` in `$file`.
 * `lay` using layer `:utf8`. For set layer using two elements array for `$file`:
 
 ```perl
-lay "unicode.txt", "π"  # => unicode.txt
-lay ["unicode.txt", ":raw"], "π"  # => unicode.txt
+lay "unicode.txt", "↯"  # => unicode.txt
+lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
 
-eval { lay "/", "π" }; $@ # ~> lay /: Is a directory
+eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
 ```
 
 ## find ($path, @filters)
@@ -229,8 +229,8 @@ Translate the wildcard to regexp.
 * Any symbols translate by `quotemeta`.
 
 ```perl
-wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
-wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)
+wildcard "*.{pm,pl}"  # \> (?^usn:^.*?\.(pm|pl)$)
+wildcard "?_??_**"  # \> (?^usn:^._[^/]_[^/]*?$)
 ```
 
 Using in filters the function `find`.
