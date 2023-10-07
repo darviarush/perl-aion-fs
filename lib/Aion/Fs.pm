@@ -1,5 +1,6 @@
 package Aion::Fs;
-use 5.008001;
+use 5.22.0;
+no strict; no warnings; no diagnostics;
 use common::sense;
 
 our $VERSION = "0.0.1";
