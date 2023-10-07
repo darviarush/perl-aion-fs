@@ -9,4 +9,5 @@ on 'test' => sub {
 	requires 'Test::More', '0.98';
 };
 
+requires 'config', '1.3';
 requires 'common::sense', '0';
