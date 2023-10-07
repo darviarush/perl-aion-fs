@@ -7,9 +7,10 @@ our $VERSION = "0.0.0-prealpha";
 
 use Exporter qw/import/;
 use List::Util qw/any all/;
+use Scalar::Util qw//;
 
 our @EXPORT = our @EXPORT_OK = grep {
-	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(_|(NaN|import)\z)/n
+	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(_|(NaN|import|any|all)\z)/n
 } keys %Aion::Fs::;
 
 # Подключает модуль, если он ещё не подключён, и возвращает его
@@ -23,29 +24,24 @@ sub include(;$) {
 	$pkg
 }
 
-# Текущий путь в exec и replace
-our $PATH;
-sub PATH() {$PATH}
-
 # как mkdir -p
 use constant FILE_EXISTS => 17;
 use constant DIR_DEFAULT_PERMISSION => 0755;
 sub mkpath (;$) {
 	my ($path) = @_;
-	$path = $PATH if @_ == 0;
-	my $permission = DIR_DEFAULT_PERMISSION;
+	$path = $_ if @_ == 0;
+	my $permission;
 	($path, $permission) = @$path if ref $path;
+	$permission = DIR_DEFAULT_PERMISSION unless Scalar::Util::looks_like_number $permission;
 	mkdir $`, $permission or ($! != FILE_EXISTS? die "mkpath $`: $!": ()) while $path =~ m!/!g;
 	undef $!;
 	$path
 }
 
 # Считывает файл
-# Для считываения :raw:
-#  {use open IN => ':raw'; cat }
 sub cat(;$) {
     my ($file) = @_;
-	$file = $PATH if @_ == 0;
+	$file = $_ if @_ == 0;
 	my $layer = ":utf8";
 	($file, $layer) = @$file if ref $file;
 	open my $f, "<$layer", $file or die "cat $file: $!";
@@ -55,15 +51,12 @@ sub cat(;$) {
 }
 
 # записать файл
-# Для записи :raw:
-#  {use open OUT => ':raw'; lay $path }
-sub lay (;$$) {
-	my ($file, $s) = @_;
-	$file = $PATH if @_ == 0;
-	$s = $_ if @_ <= 1;
+sub lay ($;$) {
+	my ($file, $s) = @_ == 1? ($_, @_): @_;
 	my $layer = ":utf8";
 	($file, $layer) = @$file if ref $file;
 	open my $f, ">$layer", $file or die "lay $file: $!";
+	local $\;
 	print $f $s;
 	close $f;
 	$file
@@ -73,18 +66,30 @@ sub lay (;$$) {
 our %FILE_INC;
 sub catonce (;$) {
 	my ($file) = @_;
-	$file = $PATH if @_ == 0;
+	$file = $_ if @_ == 0;
 	die "catonce not use ref path!" if ref $file;
 	return undef if exists $FILE_INC{$file};
 	$FILE_INC{$file} = 1;
-	cat($file)
+	cat $file
 }
 
 # Вернуть время модификации файла
 sub mtime(;$) {
 	my ($file) = @_;
-	$file = $PATH if @_ == 0;
+	$file = $_ if @_ == 0;
+	($file) = @$file if ref $file;
 	(stat $file)[9] // die "mtime $file: $!"
+}
+
+sub _filters(@) {
+	map {
+		if(ref $_ eq "CODE") {$_}
+		elsif(ref $_ eq "Regexp") { my $re = $_; sub { $_ =~ $re } }
+		elsif(/^-([a-z]+)$/) {
+			eval join "", "sub { ", (join " && ", map "-$_()", split //, $1), " }"
+		}
+		else { my $re = wildcard(); sub { $_ =~ $re } }
+	} @_
 }
 
 # Найти файлы
@@ -92,55 +97,69 @@ sub find($;@) {
 	my $file = shift;
     $file = [$file] unless ref $file;
 
-	my @noenter;
-	my @filters;
-	for(@_) {
-		push @noenter, $_ when ref $_ eq "Aion::Fs::noenter";
-		push @filters, $_ when ref $_ eq "CODE";
-		push @filters, do { my $re = $_; sub { $PATH =~ $re } } when ref $_ eq "Regexp";
-		push @filters, eval join "", "sub { ", (join " && ", map "-$_(\$PATH)", split //, $1), " }" when /^-([a-z]+)$/;
-		default { my $re = wildcard(); push @filters, sub { $PATH =~ $re } }
+	my @noenters; my $errorenter = sub {};
+	my $ex = @_ && ref($_[$#_]) =~ /^Aion::Fs::(noenter|errorenter)\z/ ? pop: undef;
+
+	if($ex) {
+		if($1 eq "errorenter") {
+			$errorenter = $ex;
+		} else {
+			$errorenter = pop @$ex if ref $ex->[$#$ex] eq "Aion::Fs::errorenter";
+			push @noenters, _filters @$ex;
+		}
 	}
 
+	my @filters = _filters @_;
+
 	my @ret;
+	local $_;
 
     FILE: while(@$file) {
-		local $PATH = shift @$file;
+		$_ = shift @$file;
 
-		push @ret, $PATH if all { $_->() } @filters;
+		for my $filter (@filters) {
+			goto DIR unless $filter->();
+		}
 
-		if(-d $PATH) {
-			next FILE if any { $_->() } @noenter;
+		push @ret, $_;
 
-			opendir my $dir, $PATH or do {
-				warn "find $PATH: $!";
-				next;
-			};
+		DIR: if(-d) {
+			for my $noenter (@noenters) {
+				next FILE if $noenter->();
+			}
+
+			opendir my $dir, $_ or do { $errorenter->(); next FILE };
 			my @file;
-			while(readdir $dir) {
-				push @file, "$PATH/$_" unless /^(\.{1,2})\z/n;
+			while(my $f = readdir $dir) {
+				push @file, "$_/$f" if $f !~ /^\.{1,2}\z/;
 			}
 			push @$file, sort @file;
 			closedir $dir;
 		}
 	}
-
 	@ret
 }
 
 # Не входить в подкаталоги
-sub noenter(&@) {
-	bless(shift, "Aion::Fs::noenter"), @_
+sub noenter(@) {
+	bless [@_], "Aion::Fs::noenter"
+}
+
+# Вызывается для всех ошибок ввода-вывода
+sub errorenter(&) {
+	bless shift, "Aion::Fs::errorenter"
 }
 
 # Производит замену во всех указанных файлах. Возвращает файлы в которых замен не было
 sub replace(&@) {
     my $fn = shift;
-	my @noreplace; local($_, $PATH);
-    for $PATH (@_) {
-        my $file = $_ = cat;
+	my @noreplace; local $_; my $pkg = caller;
+	my $aref = "${pkg}::a";	my $bref = "${pkg}::b";
+    for $$aref (@_) {
+		if(ref $$aref) { ($$aref, $$bref) = @$$aref } else { $$bref = ":utf8" }
+        my $file = $_ = cat [$$aref, $$bref];
         $fn->();
-		if($file ne $_) {lay} else {push @noreplace, $PATH}
+		if($file ne $_) { lay [$$aref, $$bref], $_ } else { push @noreplace, $$aref }
     }
 	@noreplace
 }
@@ -177,16 +196,6 @@ sub wildcard(;$) {
 	qr/^$wildcard$/s
 }
 
-# Ловушка для STDERR
-sub stderrtrap(&) {
-	my $sub = shift;
-	open my $old, ">&", \*STDERR or die "Can't dup STDERR: $!";
-	open \*STDERR, ">", \my $std or die "Can't open memory file: $!";
-	$sub->();
-	close \*STDERR;
-	open my $old, ">&", \*STDERR or die "Can't dup STDERR: $!";
-}
-
 # Открывает файл на указанной строке в редакторе
 use config EDITOR => "vscodium";
 sub goto_editor($$) {
@@ -195,7 +204,7 @@ sub goto_editor($$) {
 	$p =~ s!%p!$path!;
 	$p =~ s!%l!$line!;
 	my $status = system $p;
-	die "$path:$line\n\n$status) $?" if $status;
+	die "$path:$line --> $status" if $status;
 	return;
 }
 
@@ -222,20 +231,21 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 	lay mkpath "hello/big/world.txt", "hellow!";
 	lay mkpath "hello/small/world.txt", "noenter";
 	
-	mtime "hello"  # ~> \d+
+	mtime "hello"  # ~> ^\d+$
 	
-	my @noreplaced = replace { s/h/${\ PATH} H/ }
-	    find "hello", "-f", "*.txt", qr/\.txt$/,
-	        noenter { PATH =~ wildcard "*small*" };
+	[map cat, grep -f, find ["hello/big", "hello/small"]]  # --> [qw/ hellow! noenter /]
+	
+	my @noreplaced = replace { s/h/$a $b H/ }
+	    find "hello", "-f", "*.txt", qr/\.txt$/, sub { /\.txt$/ },
+	        noenter "*small*",
+	            errorenter { die "find $_: $!" };
 	
 	\@noreplaced # --> ["hello/moon.txt"]
 	
-	cat "hello/world.txt"       # => hello/world.txt Hi!
+	cat "hello/world.txt"       # => hello/world.txt :utf8 Hi!
 	cat "hello/moon.txt"        # => noreplace
-	cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!
+	cat "hello/big/world.txt"   # => hello/big/world.txt :utf8 Hellow!
 	cat "hello/small/world.txt" # => noenter
-	
-	scalar find ["hello/big", "hello/small"]  # -> 4
 	
 	[find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]
 	[find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]
@@ -255,22 +265,9 @@ In Aion::Fs used the programming principle KISS - Keep It Simple, Stupid.
 
 =head1 SUBROUTINES/METHODS
 
-=head2 PATH ()
-
-The current path in C<replace> and C<noenter> blocks. It use if not specified in C<mkpath>, C<mtime>, C<cat>, C<lay>, etc.
-
-It is modifiable:
-
-	local $Aion::Fs::PATH = "path1";
-	{
-	    local $Aion::Fs::PATH = "path2";
-	    PATH  # => path2
-	}
-	PATH  # => path1
-
 =head2 cat ($file)
 
-Read file. If file not specified, then use C<PATH>.
+Read file. If file not specified, then use C<$_>.
 
 	cat "/etc/passwd"  # ~> root
 
@@ -290,11 +287,9 @@ Write C<$content> in C<$file>.
 
 =over
 
-=item * If C<$file> not specified, then use C<PATH>.
+=item * If one parameter specified, then use C<$_> as C<$file>.
 
-=item * If C<$content> not specified, then use C<$_>.
-
-=item * C<lay> using layer C<:utf8>. For set layer using:
+=item * C<lay> using layer C<:utf8>. For set layer using two elements array for C<$file>:
 
 =back
 
@@ -327,13 +322,29 @@ If filter -X is unused, then throw exception:
 
 	eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called
 
+If C<find> is impossible to enter the subdirectory, then call errorenter with set variable C<$_> and C<$!>.
+
+	mkpath ["example/", 0];
+	
+	[find "example"]    # --> ["example"]
+	[find "example", noenter "-d"]    # --> ["example"]
+	
+	eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied
+
+=head2 noenter (@filters)
+
+No enter to catalogs. Using in C<find>. C<@filters> same as in C<find>.
+
+=head2 errorenter (&block)
+
+Call C<&block> for each error on open catalog.
+
 =head2 erase (@paths)
 
 Remove files and empty catalogs. Returns the C<@paths>.
 
-=head2 noenter (&sub)
-
-No enter to catalogs. Using in C<find>.
+	eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy
+	eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied
 
 =head2 mkpath ($path)
 
@@ -351,7 +362,7 @@ As B<mkdir -p>, but consider last path-part (after last slash) as filename, and 
 
 =back
 
-	$Aion::Fs::PATH = ["A", 0755];
+	local $_ = ["A", 0755];
 	mkpath   # => A
 	
 	eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
@@ -362,14 +373,21 @@ Time modification the C<$file> in unixtime.
 
 Raise exeception if file not exists, or not permissions:
 
-	local $Aion::Fs::PATH = "nofile";
+	local $_ = "nofile";
 	eval { mtime }; $@  # ~> mtime nofile: No such file or directory
+	
+	mtime ["/"]   # ~> ^\d+$
 
 =head2 replace (&sub, @files)
 
 Replacing each the file if C<&sub> replace C<$_>. Returns files in which there were no replacements.
 
 C<@files> can contain arrays of two elements. The first one is treated as a path, and the second one is treated as a layer. Default layer is C<:utf8>.
+
+	local $_ = "replace.ex";
+	lay "abc";
+	replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
+	cat  # => ¡bc
 
 =head2 include ($pkg)
 
@@ -398,10 +416,9 @@ File lib/N.pm:
 
 Read the file in first call with this file. Any call with this file return C<undef>. Using for insert js and css modules in the resulting file.
 
-	local $Aion::Fs::PATH = "catonce.txt";
-	local $_ = "result";
-	lay;
-	catonce  # -> $_
+	local $_ = "catonce.txt";
+	lay "result";
+	catonce  # -> "result"
 	catonce  # -> undef
 	
 	eval { catonce[] }; $@ # ~> catonce not use ref path!
@@ -431,6 +448,7 @@ Translate the wildcard to regexp.
 =back
 
 	wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
+	wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)
 
 Using in filters the function C<find>.
 
@@ -452,6 +470,8 @@ File .config.pm:
 
 	goto_editor "mypath", 10;
 	cat "ed.txt"  # => mypath:10\n
+	
+	eval { goto_editor "`", 1 }; $@  # ~> `:1 --> 512
 
 Default the editor is C<vscodium>.
 

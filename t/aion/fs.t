@@ -16,20 +16,21 @@ lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
 lay mkpath "hello/small/world.txt", "noenter";
 
-::like scalar do {mtime "hello"}, qr!\d+!, 'mtime "hello"  # ~> \d+';
+::like scalar do {mtime "hello"}, qr!^\d+$!, 'mtime "hello"  # ~> ^\d+$';
 
-my @noreplaced = replace { s/h/${\ PATH} H/ }
-    find "hello", "-f", "*.txt", qr/\.txt$/,
-        noenter { PATH =~ wildcard "*small*" };
+::is_deeply scalar do {[map cat, grep -f, find ["hello/big", "hello/small"]]}, scalar do {[qw/ hellow! noenter /]}, '[map cat, grep -f, find ["hello/big", "hello/small"]]  # --> [qw/ hellow! noenter /]';
+
+my @noreplaced = replace { s/h/$a $b H/ }
+    find "hello", "-f", "*.txt", qr/\.txt$/, sub { /\.txt$/ },
+        noenter "*small*",
+            errorenter { die "find $_: $!" };
 
 ::is_deeply scalar do {\@noreplaced}, scalar do {["hello/moon.txt"]}, '\@noreplaced # --> ["hello/moon.txt"]';
 
-::is scalar do {cat "hello/world.txt"}, "hello/world.txt Hi!", 'cat "hello/world.txt"       # => hello/world.txt Hi!';
+::is scalar do {cat "hello/world.txt"}, "hello/world.txt :utf8 Hi!", 'cat "hello/world.txt"       # => hello/world.txt :utf8 Hi!';
 ::is scalar do {cat "hello/moon.txt"}, "noreplace", 'cat "hello/moon.txt"        # => noreplace';
-::is scalar do {cat "hello/big/world.txt"}, "hello/big/world.txt Hellow!", 'cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!';
+::is scalar do {cat "hello/big/world.txt"}, "hello/big/world.txt :utf8 Hellow!", 'cat "hello/big/world.txt"   # => hello/big/world.txt :utf8 Hellow!';
 ::is scalar do {cat "hello/small/world.txt"}, "noenter", 'cat "hello/small/world.txt" # => noenter';
-
-::is scalar do {scalar find ["hello/big", "hello/small"]}, scalar do{4}, 'scalar find ["hello/big", "hello/small"]  # -> 4';
 
 ::is_deeply scalar do {[find "hello", "*.txt"]}, scalar do {[qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]}, '[find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]';
 ::is_deeply scalar do {[find "hello", "-d"]}, scalar do {[qw!  hello  hello/big hello/small  !]}, '[find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]';
@@ -50,24 +51,9 @@ erase reverse find "hello";
 # 
 # # SUBROUTINES/METHODS
 # 
-# ## PATH ()
-# 
-# The current path in `replace` and `noenter` blocks. It use if not specified in `mkpath`, `mtime`, `cat`, `lay`, etc.
-# 
-# It is modifiable:
-# 
-done_testing; }; subtest 'PATH ()' => sub { 
-local $Aion::Fs::PATH = "path1";
-{
-    local $Aion::Fs::PATH = "path2";
-::is scalar do {PATH}, "path2", '    PATH  # => path2';
-}
-::is scalar do {PATH}, "path1", 'PATH  # => path1';
-
-# 
 # ## cat ($file)
 # 
-# Read file. If file not specified, then use `PATH`.
+# Read file. If file not specified, then use `$_`.
 # 
 done_testing; }; subtest 'cat ($file)' => sub { 
 ::like scalar do {cat "/etc/passwd"}, qr!root!, 'cat "/etc/passwd"  # ~> root';
@@ -91,9 +77,8 @@ lay "unicode.txt", "↯";
 # 
 # Write `$content` in `$file`.
 # 
-# * If `$file` not specified, then use `PATH`.
-# * If `$content` not specified, then use `$_`.
-# * `lay` using layer `:utf8`. For set layer using:
+# * If one parameter specified, then use `$_` as `$file`.
+# * `lay` using layer `:utf8`. For set layer using two elements array for `$file`:
 # 
 done_testing; }; subtest 'lay ($file, $content)' => sub { 
 ::is scalar do {lay "unicode.txt", "↯"}, "unicode.txt", 'lay "unicode.txt", "↯"  # => unicode.txt';
@@ -121,13 +106,33 @@ done_testing; }; subtest 'find ($path, @filters)' => sub {
 ::like scalar do {eval { find "example", "-h" }; $@}, qr!Undefined subroutine &Aion::Fs::h called!, 'eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called';
 
 # 
+# If `find` is impossible to enter the subdirectory, then call errorenter with set variable `$_` and `$!`.
+# 
+
+mkpath ["example/", 0];
+
+::is_deeply scalar do {[find "example"]}, scalar do {["example"]}, '[find "example"]    # --> ["example"]';
+::is_deeply scalar do {[find "example", noenter "-d"]}, scalar do {["example"]}, '[find "example", noenter "-d"]    # --> ["example"]';
+
+::like scalar do {eval { find "example", errorenter { die "find $_: $!" } }; $@}, qr!find example: Permission denied!, 'eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied';
+
+# 
+# ## noenter (@filters)
+# 
+# No enter to catalogs. Using in `find`. `@filters` same as in `find`.
+# 
+# ## errorenter (&block)
+# 
+# Call `&block` for each error on open catalog.
+# 
 # ## erase (@paths)
 # 
 # Remove files and empty catalogs. Returns the `@paths`.
 # 
-# ## noenter (&sub)
-# 
-# No enter to catalogs. Using in `find`.
+done_testing; }; subtest 'erase (@paths)' => sub { 
+::like scalar do {eval { erase "/" }; $@}, qr!erase dir /: Device or resource busy!, 'eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy';
+::like scalar do {eval { erase "/dev/null" }; $@}, qr!erase file /dev/null: Permission denied!, 'eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied';
+
 # 
 # ## mkpath ($path)
 # 
@@ -139,7 +144,7 @@ done_testing; }; subtest 'find ($path, @filters)' => sub {
 # * Returns `$path`.
 # 
 done_testing; }; subtest 'mkpath ($path)' => sub { 
-$Aion::Fs::PATH = ["A", 0755];
+local $_ = ["A", 0755];
 ::is scalar do {mkpath}, "A", 'mkpath   # => A';
 
 ::like scalar do {eval { mkpath "/A/" }; $@}, qr!mkpath : No such file or directory!, 'eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory';
@@ -152,8 +157,10 @@ $Aion::Fs::PATH = ["A", 0755];
 # Raise exeception if file not exists, or not permissions:
 # 
 done_testing; }; subtest 'mtime ($file)' => sub { 
-local $Aion::Fs::PATH = "nofile";
+local $_ = "nofile";
 ::like scalar do {eval { mtime }; $@}, qr!mtime nofile: No such file or directory!, 'eval { mtime }; $@  # ~> mtime nofile: No such file or directory';
+
+::like scalar do {mtime ["/"]}, qr!^\d+$!, 'mtime ["/"]   # ~> ^\d+$';
 
 # 
 # ## replace (&sub, @files)
@@ -161,6 +168,13 @@ local $Aion::Fs::PATH = "nofile";
 # Replacing each the file if `&sub` replace `$_`. Returns files in which there were no replacements.
 # 
 # `@files` can contain arrays of two elements. The first one is treated as a path, and the second one is treated as a layer. Default layer is `:utf8`.
+# 
+done_testing; }; subtest 'replace (&sub, @files)' => sub { 
+local $_ = "replace.ex";
+lay "abc";
+replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
+::is scalar do {cat}, "¡bc", 'cat  # => ¡bc';
+
 # 
 # ## include ($pkg)
 # 
@@ -192,10 +206,9 @@ use lib "lib";
 # Read the file in first call with this file. Any call with this file return `undef`. Using for insert js and css modules in the resulting file.
 # 
 done_testing; }; subtest 'catonce ($file)' => sub { 
-local $Aion::Fs::PATH = "catonce.txt";
-local $_ = "result";
-lay;
-::is scalar do {catonce}, scalar do{$_}, 'catonce  # -> $_';
+local $_ = "catonce.txt";
+lay "result";
+::is scalar do {catonce}, scalar do{"result"}, 'catonce  # -> "result"';
 ::is scalar do {catonce}, scalar do{undef}, 'catonce  # -> undef';
 
 ::like scalar do {eval { catonce[] }; $@}, qr!catonce not use ref path\!!, 'eval { catonce[] }; $@ # ~> catonce not use ref path!';
@@ -216,6 +229,7 @@ lay;
 # 
 done_testing; }; subtest 'wildcard ($wildcard)' => sub { 
 ::is scalar do {wildcard "*.{pm,pl}"}, '(?^us:^.*?\.(pm|pl)$)', 'wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)';
+::is scalar do {wildcard "?_??_**"}, '(?^us:^._[^/]_[^/]*?$)', 'wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)';
 
 # 
 # Using in filters the function `find`.
@@ -238,6 +252,8 @@ done_testing; }; subtest 'wildcard ($wildcard)' => sub {
 done_testing; }; subtest 'goto_editor ($path, $line)' => sub { 
 goto_editor "mypath", 10;
 ::is scalar do {cat "ed.txt"}, "mypath:10\n", 'cat "ed.txt"  # => mypath:10\n';
+
+::like scalar do {eval { goto_editor "`", 1 }; $@}, qr!`:1 --> 512!, 'eval { goto_editor "`", 1 }; $@  # ~> `:1 --> 512';
 
 # 
 # Default the editor is `vscodium`.

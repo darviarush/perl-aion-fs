@@ -16,20 +16,21 @@ lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
 lay mkpath "hello/small/world.txt", "noenter";
 
-mtime "hello"  # ~> \d+
+mtime "hello"  # ~> ^\d+$
 
-my @noreplaced = replace { s/h/${\ PATH} H/ }
-    find "hello", "-f", "*.txt", qr/\.txt$/,
-        noenter { PATH =~ wildcard "*small*" };
+[map cat, grep -f, find ["hello/big", "hello/small"]]  # --> [qw/ hellow! noenter /]
+
+my @noreplaced = replace { s/h/$a $b H/ }
+    find "hello", "-f", "*.txt", qr/\.txt$/, sub { /\.txt$/ },
+        noenter "*small*",
+            errorenter { die "find $_: $!" };
 
 \@noreplaced # --> ["hello/moon.txt"]
 
-cat "hello/world.txt"       # => hello/world.txt Hi!
+cat "hello/world.txt"       # => hello/world.txt :utf8 Hi!
 cat "hello/moon.txt"        # => noreplace
-cat "hello/big/world.txt"   # => hello/big/world.txt Hellow!
+cat "hello/big/world.txt"   # => hello/big/world.txt :utf8 Hellow!
 cat "hello/small/world.txt" # => noenter
-
-scalar find ["hello/big", "hello/small"]  # -> 4
 
 [find "hello", "*.txt"]  # --> [qw!  hello/moon.txt  hello/world.txt  hello/big/world.txt  hello/small/world.txt  !]
 [find "hello", "-d"]  # --> [qw!  hello  hello/big hello/small  !]
@@ -50,24 +51,9 @@ In Aion::Fs used the programming principle KISS - Keep It Simple, Stupid.
 
 # SUBROUTINES/METHODS
 
-## PATH ()
-
-The current path in `replace` and `noenter` blocks. It use if not specified in `mkpath`, `mtime`, `cat`, `lay`, etc.
-
-It is modifiable:
-
-```perl
-local $Aion::Fs::PATH = "path1";
-{
-    local $Aion::Fs::PATH = "path2";
-    PATH  # => path2
-}
-PATH  # => path1
-```
-
 ## cat ($file)
 
-Read file. If file not specified, then use `PATH`.
+Read file. If file not specified, then use `$_`.
 
 ```perl
 cat "/etc/passwd"  # ~> root
@@ -91,9 +77,8 @@ eval { cat "A" }; $@  # ~> cat A: No such file or directory
 
 Write `$content` in `$file`.
 
-* If `$file` not specified, then use `PATH`.
-* If `$content` not specified, then use `$_`.
-* `lay` using layer `:utf8`. For set layer using:
+* If one parameter specified, then use `$_` as `$file`.
+* `lay` using layer `:utf8`. For set layer using two elements array for `$file`:
 
 ```perl
 lay "unicode.txt", "↯"  # => unicode.txt
@@ -121,13 +106,33 @@ If filter -X is unused, then throw exception:
 eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called
 ```
 
+If `find` is impossible to enter the subdirectory, then call errorenter with set variable `$_` and `$!`.
+
+```perl
+mkpath ["example/", 0];
+
+[find "example"]    # --> ["example"]
+[find "example", noenter "-d"]    # --> ["example"]
+
+eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied
+```
+
+## noenter (@filters)
+
+No enter to catalogs. Using in `find`. `@filters` same as in `find`.
+
+## errorenter (&block)
+
+Call `&block` for each error on open catalog.
+
 ## erase (@paths)
 
 Remove files and empty catalogs. Returns the `@paths`.
 
-## noenter (&sub)
-
-No enter to catalogs. Using in `find`.
+```perl
+eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy
+eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied
+```
 
 ## mkpath ($path)
 
@@ -139,7 +144,7 @@ As **mkdir -p**, but consider last path-part (after last slash) as filename, and
 * Returns `$path`.
 
 ```perl
-$Aion::Fs::PATH = ["A", 0755];
+local $_ = ["A", 0755];
 mkpath   # => A
 
 eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
@@ -152,8 +157,10 @@ Time modification the `$file` in unixtime.
 Raise exeception if file not exists, or not permissions:
 
 ```perl
-local $Aion::Fs::PATH = "nofile";
+local $_ = "nofile";
 eval { mtime }; $@  # ~> mtime nofile: No such file or directory
+
+mtime ["/"]   # ~> ^\d+$
 ```
 
 ## replace (&sub, @files)
@@ -161,6 +168,13 @@ eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 Replacing each the file if `&sub` replace `$_`. Returns files in which there were no replacements.
 
 `@files` can contain arrays of two elements. The first one is treated as a path, and the second one is treated as a layer. Default layer is `:utf8`.
+
+```perl
+local $_ = "replace.ex";
+lay "abc";
+replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
+cat  # => ¡bc
+```
 
 ## include ($pkg)
 
@@ -192,10 +206,9 @@ include("A")->new               # ~> A=HASH\(0x\w+\)
 Read the file in first call with this file. Any call with this file return `undef`. Using for insert js and css modules in the resulting file.
 
 ```perl
-local $Aion::Fs::PATH = "catonce.txt";
-local $_ = "result";
-lay;
-catonce  # -> $_
+local $_ = "catonce.txt";
+lay "result";
+catonce  # -> "result"
 catonce  # -> undef
 
 eval { catonce[] }; $@ # ~> catonce not use ref path!
@@ -216,6 +229,7 @@ Translate the wildcard to regexp.
 
 ```perl
 wildcard "*.{pm,pl}"  # \> (?^us:^.*?\.(pm|pl)$)
+wildcard "?_??_**"  # \> (?^us:^._[^/]_[^/]*?$)
 ```
 
 Using in filters the function `find`.
@@ -238,6 +252,8 @@ config_module 'Aion::Fs' => {
 ```perl
 goto_editor "mypath", 10;
 cat "ed.txt"  # => mypath:10\n
+
+eval { goto_editor "`", 1 }; $@  # ~> `:1 --> 512
 ```
 
 Default the editor is `vscodium`.
