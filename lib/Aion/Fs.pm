@@ -1,16 +1,14 @@
 package Aion::Fs;
-use 5.22.0;
-no strict; no warnings; no diagnostics;
+use 5.008001;
 use common::sense;
 
-our $VERSION = "0.0.0-prealpha";
+our $VERSION = "0.0.1";
 
 use Exporter qw/import/;
-use List::Util qw/any all/;
 use Scalar::Util qw//;
 
 our @EXPORT = our @EXPORT_OK = grep {
-	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(_|(NaN|import|any|all)\z)/n
+	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(_|(NaN|import)\z)/n
 } keys %Aion::Fs::;
 
 # Подключает модуль, если он ещё не подключён, и возвращает его

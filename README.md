@@ -1,10 +1,11 @@
+[![Actions Status](https://github.com/darviarush/perl-aion-fs/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-fs/actions)
 # NAME
 
 Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 # VERSION
 
-0.0.0-prealpha
+0.0.1
 
 # SYNOPSIS
 
