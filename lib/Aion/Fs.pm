@@ -8,7 +8,7 @@ use Exporter qw/import/;
 use Scalar::Util qw//;
 
 our @EXPORT = our @EXPORT_OK = grep {
-	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(_|(NaN|import)\z)/n
+	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(?:_|(NaN|import)\z)/
 } keys %Aion::Fs::;
 
 # Подключает модуль, если он ещё не подключён, и возвращает его
