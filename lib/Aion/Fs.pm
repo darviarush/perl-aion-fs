@@ -271,9 +271,9 @@ Read file. If file not specified, then use C<$_>.
 
 C<cat> read with layer C<:utf8>. But you can set the level like this:
 
-	lay "unicode.txt", "↯";
+	lay "unicode.txt", "π";
 	length cat "unicode.txt"            # -> 1
-	length cat["unicode.txt", ":raw"]   # -> 3
+	length cat["unicode.txt", ":raw"]   # -> 2
 
 C<cat> raise exception by error on io operation:
 
@@ -291,10 +291,10 @@ Write C<$content> in C<$file>.
 
 =back
 
-	lay "unicode.txt", "↯"  # => unicode.txt
-	lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
+	lay "unicode.txt", "π"  # => unicode.txt
+	lay ["unicode.txt", ":raw"], "π"  # => unicode.txt
 	
-	eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
+	eval { lay "/", "π" }; $@ # ~> lay /: Is a directory
 
 =head2 find ($path, @filters)
 

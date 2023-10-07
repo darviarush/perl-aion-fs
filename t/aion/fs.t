@@ -4,7 +4,7 @@ use common::sense; use open qw/:std :utf8/; use Test::More 0.98; sub _mkpath_ { 
 # 
 # # VERSION
 # 
-# 0.0.0-prealpha
+# 0.0.1
 # 
 # # SYNOPSIS
 # 
@@ -62,9 +62,9 @@ done_testing; }; subtest 'cat ($file)' => sub {
 # `cat` read with layer `:utf8`. But you can set the level like this:
 # 
 
-lay "unicode.txt", "↯";
+lay "unicode.txt", "π";
 ::is scalar do {length cat "unicode.txt"}, scalar do{1}, 'length cat "unicode.txt"            # -> 1';
-::is scalar do {length cat["unicode.txt", ":raw"]}, scalar do{3}, 'length cat["unicode.txt", ":raw"]   # -> 3';
+::is scalar do {length cat["unicode.txt", ":raw"]}, scalar do{2}, 'length cat["unicode.txt", ":raw"]   # -> 2';
 
 # 
 # `cat` raise exception by error on io operation:
@@ -81,10 +81,10 @@ lay "unicode.txt", "↯";
 # * `lay` using layer `:utf8`. For set layer using two elements array for `$file`:
 # 
 done_testing; }; subtest 'lay ($file, $content)' => sub { 
-::is scalar do {lay "unicode.txt", "↯"}, "unicode.txt", 'lay "unicode.txt", "↯"  # => unicode.txt';
-::is scalar do {lay ["unicode.txt", ":raw"], "↯"}, "unicode.txt", 'lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt';
+::is scalar do {lay "unicode.txt", "π"}, "unicode.txt", 'lay "unicode.txt", "π"  # => unicode.txt';
+::is scalar do {lay ["unicode.txt", ":raw"], "π"}, "unicode.txt", 'lay ["unicode.txt", ":raw"], "π"  # => unicode.txt';
 
-::like scalar do {eval { lay "/", "↯" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory';
+::like scalar do {eval { lay "/", "π" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "π" }; $@ # ~> lay /: Is a directory';
 
 # 
 # ## find ($path, @filters)

@@ -62,9 +62,9 @@ cat "/etc/passwd"  # ~> root
 `cat` read with layer `:utf8`. But you can set the level like this:
 
 ```perl
-lay "unicode.txt", "↯";
+lay "unicode.txt", "π";
 length cat "unicode.txt"            # -> 1
-length cat["unicode.txt", ":raw"]   # -> 3
+length cat["unicode.txt", ":raw"]   # -> 2
 ```
 
 `cat` raise exception by error on io operation:
@@ -81,10 +81,10 @@ Write `$content` in `$file`.
 * `lay` using layer `:utf8`. For set layer using two elements array for `$file`:
 
 ```perl
-lay "unicode.txt", "↯"  # => unicode.txt
-lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
+lay "unicode.txt", "π"  # => unicode.txt
+lay ["unicode.txt", ":raw"], "π"  # => unicode.txt
 
-eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
+eval { lay "/", "π" }; $@ # ~> lay /: Is a directory
 ```
 
 ## find ($path, @filters)
