@@ -12,3 +12,4 @@ on 'test' => sub {
 
 requires 'config', '1.3';
 requires 'common::sense', '0';
+requires 'Time::HiRes', '0';

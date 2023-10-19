@@ -5,7 +5,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 # VERSION
 
-0.0.1
+0.0.3
 
 # SYNOPSIS
 
@@ -17,7 +17,7 @@ lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
 lay mkpath "hello/small/world.txt", "noenter";
 
-mtime "hello"  # ~> ^\d+$
+mtime "hello"  # ~> ^\d+(\.\d+)?$
 
 [map cat, grep -f, find ["hello/big", "hello/small"]]  # --> [qw/ hellow! noenter /]
 
@@ -45,10 +45,15 @@ erase reverse find "hello";
 
 This module provide light entering to filesystem.
 
-Modules File::Path, File::Slurper and
-File::Find are quite weighted with various features that are rarely used, but take time to get acquainted and, thereby, increases the entry threshold.
+Modules `File::Path`, `File::Slurper` and
+`File::Find` are quite weighted with various features that are rarely used, but take time to get acquainted and, thereby, increases the entry threshold.
 
-In Aion::Fs used the programming principle KISS - Keep It Simple, Stupid.
+In `Aion::Fs` used the programming principle KISS - Keep It Simple, Stupid.
+
+Supermodule `IO::All` provide OOP, and `Aion::Fs` provide FP.
+
+* OOP - object oriented programming.
+* FP - functional programming.
 
 # SUBROUTINES/METHODS
 
@@ -143,7 +148,7 @@ As **mkdir -p**, but consider last path-part (after last slash) as filename, and
 * If `$path` is array ref, then use path as first and permission as second element.
 * Default permission is `0755`.
 * Returns `$path`.
-
+cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
 ```perl
 local $_ = ["A", 0755];
 mkpath   # => A
@@ -153,7 +158,7 @@ eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
 
 ## mtime ($file)
 
-Time modification the `$file` in unixtime.
+Time modification the `$file` in unixtime in subsecond resolution (from Time::HiRes::stat).
 
 Raise exeception if file not exists, or not permissions:
 
@@ -161,7 +166,7 @@ Raise exeception if file not exists, or not permissions:
 local $_ = "nofile";
 eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 
-mtime ["/"]   # ~> ^\d+$
+mtime ["/"]   # ~> ^\d+(\.\d+)?$
 ```
 
 ## replace (&sub, @files)

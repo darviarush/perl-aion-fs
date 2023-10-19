@@ -4,7 +4,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 # VERSION
 
-0.0.1
+0.0.3
 
 # SYNOPSIS
 
@@ -16,7 +16,7 @@ lay mkpath "hello/moon.txt", "noreplace";
 lay mkpath "hello/big/world.txt", "hellow!";
 lay mkpath "hello/small/world.txt", "noenter";
 
-mtime "hello"  # ~> ^\d+$
+mtime "hello"  # ~> ^\d+(\.\d+)?$
 
 [map cat, grep -f, find ["hello/big", "hello/small"]]  # --> [qw/ hellow! noenter /]
 
@@ -157,7 +157,7 @@ eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
 
 ## mtime ($file)
 
-Time modification the `$file` in unixtime.
+Time modification the `$file` in unixtime in subsecond resolution (from Time::HiRes::stat).
 
 Raise exeception if file not exists, or not permissions:
 
@@ -165,7 +165,7 @@ Raise exeception if file not exists, or not permissions:
 local $_ = "nofile";
 eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 
-mtime ["/"]   # ~> ^\d+$
+mtime ["/"]   # ~> ^\d+(\.\d+)?$
 ```
 
 ## replace (&sub, @files)

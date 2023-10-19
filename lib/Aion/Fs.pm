@@ -3,10 +3,11 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.1";
+our $VERSION = "0.0.3";
 
 use Exporter qw/import/;
 use Scalar::Util qw//;
+use Time::HiRes qw//;
 
 our @EXPORT = our @EXPORT_OK = grep {
 	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(?:_|(NaN|import)\z)/
@@ -77,9 +78,10 @@ sub mtime(;$) {
 	my ($file) = @_;
 	$file = $_ if @_ == 0;
 	($file) = @$file if ref $file;
-	(stat $file)[9] // die "mtime $file: $!"
+	(Time::HiRes::stat $file)[9] // die "mtime $file: $!"
 }
 
+# Файловые фильтры
 sub _filters(@) {
 	map {
 		if(ref $_ eq "CODE") {$_}
@@ -219,7 +221,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 =head1 VERSION
 
-0.0.1
+0.0.3
 
 =head1 SYNOPSIS
 
@@ -230,7 +232,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 	lay mkpath "hello/big/world.txt", "hellow!";
 	lay mkpath "hello/small/world.txt", "noenter";
 	
-	mtime "hello"  # ~> ^\d+$
+	mtime "hello"  # ~> ^\d+(\.\d+)?$
 	
 	[map cat, grep -f, find ["hello/big", "hello/small"]]  # --> [qw/ hellow! noenter /]
 	
@@ -257,10 +259,20 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 This module provide light entering to filesystem.
 
-Modules File::Path, File::Slurper and
-File::Find are quite weighted with various features that are rarely used, but take time to get acquainted and, thereby, increases the entry threshold.
+Modules C<File::Path>, C<File::Slurper> and
+C<File::Find> are quite weighted with various features that are rarely used, but take time to get acquainted and, thereby, increases the entry threshold.
 
-In Aion::Fs used the programming principle KISS - Keep It Simple, Stupid.
+In C<Aion::Fs> used the programming principle KISS - Keep It Simple, Stupid.
+
+Supermodule C<IO::All> provide OOP, and C<Aion::Fs> provide FP.
+
+=over
+
+=item * OOP - object oriented programming.
+
+=item * FP - functional programming.
+
+=back
 
 =head1 SUBROUTINES/METHODS
 
@@ -358,6 +370,7 @@ As B<mkdir -p>, but consider last path-part (after last slash) as filename, and 
 =item * Default permission is C<0755>.
 
 =item * Returns C<$path>.
+cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
 
 =back
 
@@ -368,14 +381,14 @@ As B<mkdir -p>, but consider last path-part (after last slash) as filename, and 
 
 =head2 mtime ($file)
 
-Time modification the C<$file> in unixtime.
+Time modification the C<$file> in unixtime in subsecond resolution (from Time::HiRes::stat).
 
 Raise exeception if file not exists, or not permissions:
 
 	local $_ = "nofile";
 	eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 	
-	mtime ["/"]   # ~> ^\d+$
+	mtime ["/"]   # ~> ^\d+(\.\d+)?$
 
 =head2 replace (&sub, @files)
 
@@ -410,14 +423,6 @@ File lib/N.pm:
 	include("A")->new               # ~> A=HASH\(0x\w+\)
 	[map include, qw/A N/]          # --> [qw/A N/]
 	{ local $_="N"; include->ex }   # -> 123
-
-=head2 A::new
-
-Test subroutine.
-
-=head2 N::ex
-
-Test subroutine.
 
 =head2 catonce ($file)
 
