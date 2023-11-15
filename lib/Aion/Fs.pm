@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.4";
+our $VERSION = "0.0.5";
 
 use Exporter qw/import/;
 use Scalar::Util qw//;
@@ -241,7 +241,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 =head1 VERSION
 
-0.0.4
+0.0.5
 
 =head1 SYNOPSIS
 
@@ -312,6 +312,18 @@ C<cat> raise exception by error on io operation:
 
 	eval { cat "A" }; $@  # ~> cat A: No such file or directory
 
+B<See also:>
+
+=over
+
+=item * LLL<https://metacpan.org/pod/File::Slurp> — C<read_file('file.txt')>.
+
+=item * LLL<https://metacpan.org/pod/File::Slurper> — C<read_text('file.txt')>, C<read_binary('file.txt')>.
+
+=item * LLL<https://metacpan.org/dist/IO-All/view/lib/IO/All.pod> — C<< io('file.txt') E<gt> $contents >>.
+
+=back
+
 =head2 lay ($file, $content)
 
 Write C<$content> in C<$file>.
@@ -328,6 +340,18 @@ Write C<$content> in C<$file>.
 	lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
 	
 	eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
+
+B<See also:>
+
+=over
+
+=item * LLL<https://metacpan.org/pod/File::Slurp> — C<write_file('file.txt', $contents)>.
+
+=item * LLL<https://metacpan.org/pod/File::Slurper> — C<write_text('file.txt', $contents)>, C<write_binary('file.txt', $contents)>.
+
+=item * LLL<https://metacpan.org/dist/IO-All/view/lib/IO/All.pod> — C<< io('file.txt') E<lt> $contents >>.
+
+=back
 
 =head2 find ($path, @filters)
 
@@ -362,6 +386,14 @@ If C<find> is impossible to enter the subdirectory, then call errorenter with se
 	
 	eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied
 
+B<See also:>
+
+=over
+
+=item * LLL<https://perldoc.perl.org/File::Find> — C<find(sub { push @paths, $File::Find::name }, $dir)>.
+
+=back
+
 =head2 noenter (@filters)
 
 No enter to catalogs. Using in C<find>. C<@filters> same as in C<find>.
@@ -376,6 +408,16 @@ Remove files and empty catalogs. Returns the C<@paths>.
 
 	eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy
 	eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied
+
+B<See also:>
+
+=over
+
+=item * LLL<https://perldoc.perl.org/functions/unlink>.
+
+=item * LLL<https://metacpan.org/pod/File::Path> — C<remove_tree("dir")>.
+
+=back
 
 =head2 mkpath ($path)
 
@@ -401,6 +443,14 @@ As B<mkdir -p>, but consider last path-part (after last slash) as filename, and 
 	mkpath "A///./file";
 	-d "A"  # -> 1
 
+B<See also:>
+
+=over
+
+=item * LLL<https://metacpan.org/pod/File::Path> — C<mkpath("dir1/dir2")>.
+
+=back
+
 =head2 mtime ($file)
 
 Time modification the C<$file> in unixtime in subsecond resolution (from Time::HiRes::stat).
@@ -412,6 +462,18 @@ Raise exeception if file not exists, or not permissions:
 	
 	mtime ["/"]   # ~> ^\d+(\.\d+)?$
 
+B<See also:>
+
+=over
+
+=item * LLL<https://perldoc.perl.org/functions/-X> — C<-M "file.txt">, C<-M _> in days.
+
+=item * LLL<https://perldoc.perl.org/functions/stat> — C<(stat "file.txt")[9]> in seconds.
+
+=item * LLL<https://metacpan.org/pod/Time::HiRes> — C<(Time::HiRes::stat "file.txt")[9]> in seconds with fractional part.
+
+=back
+
 =head2 replace (&sub, @files)
 
 Replacing each the file if C<&sub> replace C<$_>. Returns files in which there were no replacements.
@@ -422,6 +484,16 @@ C<@files> can contain arrays of two elements. The first one is treated as a path
 	lay "abc";
 	replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
 	cat  # => ¡bc
+
+B<See also:>
+
+=over
+
+=item * LLL<https://metacpan.org/pod/File::Edit>.
+
+=item * LLL<https://metacpan.org/pod/File::Edit::Portable>.
+
+=back
 
 =head2 include ($pkg)
 

@@ -4,7 +4,7 @@ use common::sense; use open qw/:std :utf8/; use Test::More 0.98; sub _mkpath_ { 
 # 
 # # VERSION
 # 
-# 0.0.3
+# 0.0.5
 # 
 # # SYNOPSIS
 # 
@@ -78,6 +78,12 @@ lay "unicode.txt", "↯";
 ::like scalar do {eval { cat "A" }; $@}, qr!cat A: No such file or directory!, 'eval { cat "A" }; $@  # ~> cat A: No such file or directory';
 
 # 
+# **See also:**
+# 
+# * [File::Slurp](https://metacpan.org/pod/File::Slurp) — `read_file('file.txt')`.
+# * [File::Slurper](https://metacpan.org/pod/File::Slurper) — `read_text('file.txt')`, `read_binary('file.txt')`.
+# * [IO::All](https://metacpan.org/dist/IO-All/view/lib/IO/All.pod) — `io('file.txt') > $contents`.
+# 
 # ## lay ($file, $content)
 # 
 # Write `$content` in `$file`.
@@ -91,6 +97,12 @@ done_testing; }; subtest 'lay ($file, $content)' => sub {
 
 ::like scalar do {eval { lay "/", "↯" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory';
 
+# 
+# **See also:**
+# 
+# * [File::Slurp](https://metacpan.org/pod/File::Slurp) — `write_file('file.txt', $contents)`.
+# * [File::Slurper](https://metacpan.org/pod/File::Slurper) — `write_text('file.txt', $contents)`, `write_binary('file.txt', $contents)`.
+# * [IO::All](https://metacpan.org/dist/IO-All/view/lib/IO/All.pod) — `io('file.txt') < $contents`.
 # 
 # ## find ($path, @filters)
 # 
@@ -122,6 +134,10 @@ mkpath ["example/", 0];
 ::like scalar do {eval { find "example", errorenter { die "find $_: $!" } }; $@}, qr!find example: Permission denied!, 'eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied';
 
 # 
+# **See also:**
+# 
+# * [File::Find](https://perldoc.perl.org/File::Find) — `find(sub { push @paths, $File::Find::name }, $dir)`.
+# 
 # ## noenter (@filters)
 # 
 # No enter to catalogs. Using in `find`. `@filters` same as in `find`.
@@ -138,6 +154,11 @@ done_testing; }; subtest 'erase (@paths)' => sub {
 ::like scalar do {eval { erase "/" }; $@}, qr!erase dir /: Device or resource busy!, 'eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy';
 ::like scalar do {eval { erase "/dev/null" }; $@}, qr!erase file /dev/null: Permission denied!, 'eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied';
 
+# 
+# **See also:**
+# 
+# * [unlink](https://perldoc.perl.org/functions/unlink).
+# * [File::Path](https://metacpan.org/pod/File::Path) — `remove_tree("dir")`.
 # 
 # ## mkpath ($path)
 # 
@@ -158,6 +179,10 @@ mkpath "A///./file";
 ::is scalar do {-d "A"}, scalar do{1}, '-d "A"  # -> 1';
 
 # 
+# **See also:**
+# 
+# * [File::Path](https://metacpan.org/pod/File::Path) — `mkpath("dir1/dir2")`.
+# 
 # ## mtime ($file)
 # 
 # Time modification the `$file` in unixtime in subsecond resolution (from Time::HiRes::stat).
@@ -171,6 +196,12 @@ local $_ = "nofile";
 ::like scalar do {mtime ["/"]}, qr!^\d+(\.\d+)?$!, 'mtime ["/"]   # ~> ^\d+(\.\d+)?$';
 
 # 
+# **See also:**
+# 
+# * [-M](https://perldoc.perl.org/functions/-X) — `-M "file.txt"`, `-M _` in days.
+# * [stat](https://perldoc.perl.org/functions/stat) — `(stat "file.txt")[9]` in seconds.
+# * [Time::HiRes](https://metacpan.org/pod/Time::HiRes) — `(Time::HiRes::stat "file.txt")[9]` in seconds with fractional part.
+# 
 # ## replace (&sub, @files)
 # 
 # Replacing each the file if `&sub` replace `$_`. Returns files in which there were no replacements.
@@ -183,6 +214,11 @@ lay "abc";
 replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
 ::is scalar do {cat}, "¡bc", 'cat  # => ¡bc';
 
+# 
+# **See also:**
+# 
+# * [File::Edit](https://metacpan.org/pod/File::Edit).
+# * [File::Edit::Portable](https://metacpan.org/pod/File::Edit::Portable).
 # 
 # ## include ($pkg)
 # 

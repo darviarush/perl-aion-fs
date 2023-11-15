@@ -5,7 +5,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 # VERSION
 
-0.0.4
+0.0.5
 
 # SYNOPSIS
 
