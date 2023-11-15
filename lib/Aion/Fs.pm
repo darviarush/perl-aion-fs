@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.3";
+our $VERSION = "0.0.4";
 
 use Exporter qw/import/;
 use Scalar::Util qw//;
@@ -13,12 +13,28 @@ our @EXPORT = our @EXPORT_OK = grep {
 	ref \$Aion::Fs::{$_} eq "GLOB" && *{$Aion::Fs::{$_}}{CODE} && !/^(?:_|(NaN|import)\z)/
 } keys %Aion::Fs::;
 
+
+# Из пакета в файловый путь
+sub from_pkg(;$) {
+	my ($pkg) = @_ == 0? $_: @_;
+	$pkg =~ s!::!/!g;
+	"$pkg.pm"
+}
+
+# Из файлового пути в пакет
+sub to_pkg(;$) {
+	my ($path) = @_ == 0? $_: @_;
+	$path =~ s!\.\w+$!!;
+	$path =~ s!/!::!g;
+	$path
+}
+
 # Подключает модуль, если он ещё не подключён, и возвращает его
 sub include(;$) {
 	my ($pkg) = @_;
 	$pkg = $_ if @_ == 0;
 	return $pkg if $pkg->can("new");
-	my $path = ($pkg =~ s!::!/!gr) . ".pm";
+	my $path = from_pkg $pkg;
 	return $pkg if exists $INC{$path};
 	require $path;
 	$pkg
@@ -33,7 +49,11 @@ sub mkpath (;$) {
 	my $permission;
 	($path, $permission) = @$path if ref $path;
 	$permission = DIR_DEFAULT_PERMISSION unless Scalar::Util::looks_like_number $permission;
-	mkdir $`, $permission or ($! != FILE_EXISTS? die "mkpath $`: $!": ()) while $path =~ m!/!g;
+	while($path =~ m!/!g) {
+		mkdir $`, $permission
+			or ($! != FILE_EXISTS? die "mkpath $`: $!": ())
+				if $` ne '';
+	}
 	undef $!;
 	$path
 }
@@ -198,7 +218,7 @@ sub wildcard(;$) {
 }
 
 # Открывает файл на указанной строке в редакторе
-use config EDITOR => "vscodium";
+use config EDITOR => "vscodium %p:%l";
 sub goto_editor($$) {
 	my ($path, $line) = @_;
 	my $p = EDITOR;
@@ -221,7 +241,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 =head1 VERSION
 
-0.0.3
+0.0.4
 
 =head1 SYNOPSIS
 
@@ -370,14 +390,16 @@ As B<mkdir -p>, but consider last path-part (after last slash) as filename, and 
 =item * Default permission is C<0755>.
 
 =item * Returns C<$path>.
-cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
 
 =back
 
 	local $_ = ["A", 0755];
 	mkpath   # => A
 	
-	eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
+	eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied
+	
+	mkpath "A///./file";
+	-d "A"  # -> 1
 
 =head2 mtime ($file)
 
@@ -487,9 +509,23 @@ File .config.pm:
 
 Default the editor is C<vscodium>.
 
+=head2 from_pkg (;$pkg)
+
+From package to file path.
+
+	from_pkg "Aion::Fs"  # => Aion/Fs.pm
+	[map from_pkg, "Aion::Fs", "A::B::C"]  # --> ["Aion/Fs.pm", "A/B/C.pm"]
+
+=head2 to_pkg (;$path)
+
+From file path to package.
+
+	to_pkg "Aion/Fs.pm"  # => Aion::Fs
+	[map to_pkg, "Aion/Fs.md", "A/B/C.md"]  # --> ["Aion::Fs", "A::B::C"]
+
 =head1 AUTHOR
 
-Yaroslav O. Kosmina LL<mailto:dart@cpan.org>
+Yaroslav O. Kosmina L<mailto:dart@cpan.org>
 
 =head1 LICENSE
 

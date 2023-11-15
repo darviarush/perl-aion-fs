@@ -147,12 +147,15 @@ done_testing; }; subtest 'erase (@paths)' => sub {
 # * If `$path` is array ref, then use path as first and permission as second element.
 # * Default permission is `0755`.
 # * Returns `$path`.
-# cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
+# 
 done_testing; }; subtest 'mkpath ($path)' => sub { 
 local $_ = ["A", 0755];
 ::is scalar do {mkpath}, "A", 'mkpath   # => A';
 
-::like scalar do {eval { mkpath "/A/" }; $@}, qr!mkpath : No such file or directory!, 'eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory';
+::like scalar do {eval { mkpath "/A/" }; $@}, qr!mkpath /A: Permission denied!, 'eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied';
+
+mkpath "A///./file";
+::is scalar do {-d "A"}, scalar do{1}, '-d "A"  # -> 1';
 
 # 
 # ## mtime ($file)
@@ -263,9 +266,27 @@ goto_editor "mypath", 10;
 # 
 # Default the editor is `vscodium`.
 # 
+# ## from_pkg (;$pkg)
+# 
+# From package to file path.
+# 
+done_testing; }; subtest 'from_pkg (;$pkg)' => sub { 
+::is scalar do {from_pkg "Aion::Fs"}, "Aion/Fs.pm", 'from_pkg "Aion::Fs"  # => Aion/Fs.pm';
+::is_deeply scalar do {[map from_pkg, "Aion::Fs", "A::B::C"]}, scalar do {["Aion/Fs.pm", "A/B/C.pm"]}, '[map from_pkg, "Aion::Fs", "A::B::C"]  # --> ["Aion/Fs.pm", "A/B/C.pm"]';
+
+# 
+# ## to_pkg (;$path)
+# 
+# From file path to package.
+# 
+done_testing; }; subtest 'to_pkg (;$path)' => sub { 
+::is scalar do {to_pkg "Aion/Fs.pm"}, "Aion::Fs", 'to_pkg "Aion/Fs.pm"  # => Aion::Fs';
+::is_deeply scalar do {[map to_pkg, "Aion/Fs.md", "A/B/C.md"]}, scalar do {["Aion::Fs", "A::B::C"]}, '[map to_pkg, "Aion/Fs.md", "A/B/C.md"]  # --> ["Aion::Fs", "A::B::C"]';
+
+# 
 # # AUTHOR
 # 
-# Yaroslav O. Kosmina [dart@cpan.org](dart@cpan.org)
+# Yaroslav O. Kosmina <dart@cpan.org>
 # 
 # # LICENSE
 # 

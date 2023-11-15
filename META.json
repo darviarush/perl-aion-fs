@@ -1,7 +1,7 @@
 {
    "abstract" : "utilities for filesystem: read, write, find, replace files, etc",
    "author" : [
-      "Yaroslav O. Kosmina LL<mailto:dart@cpan.org>"
+      "Yaroslav O. Kosmina L<mailto:dart@cpan.org>"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Minilla/v3.1.19, CPAN::Meta::Converter version 2.150010",
@@ -69,7 +69,7 @@
          "web" : "https://github.com/darviarush/perl-aion-fs"
       }
    },
-   "version" : "0.0.3",
+   "version" : "0.0.4",
    "x_authority" : "cpan:DART",
    "x_contributors" : [
       "Yaroslav O. Kosmina <dart@cpan.org>",

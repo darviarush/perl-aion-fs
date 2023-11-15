@@ -5,7 +5,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 # VERSION
 
-0.0.3
+0.0.4
 
 # SYNOPSIS
 
@@ -79,6 +79,12 @@ length cat["unicode.txt", ":raw"]   # -> 3
 eval { cat "A" }; $@  # ~> cat A: No such file or directory
 ```
 
+**See also:**
+
+* [File::Slurp](https://metacpan.org/pod/File::Slurp) — `read_file('file.txt')`.
+* [File::Slurper](https://metacpan.org/pod/File::Slurper) — `read_text('file.txt')`, `read_binary('file.txt')`.
+* [IO::All](https://metacpan.org/dist/IO-All/view/lib/IO/All.pod) — `io('file.txt') > $contents`.
+
 ## lay ($file, $content)
 
 Write `$content` in `$file`.
@@ -92,6 +98,12 @@ lay ["unicode.txt", ":raw"], "↯"  # => unicode.txt
 
 eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
 ```
+
+**See also:**
+
+* [File::Slurp](https://metacpan.org/pod/File::Slurp) — `write_file('file.txt', $contents)`.
+* [File::Slurper](https://metacpan.org/pod/File::Slurper) — `write_text('file.txt', $contents)`, `write_binary('file.txt', $contents)`.
+* [IO::All](https://metacpan.org/dist/IO-All/view/lib/IO/All.pod) — `io('file.txt') < $contents`.
 
 ## find ($path, @filters)
 
@@ -123,6 +135,10 @@ mkpath ["example/", 0];
 eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied
 ```
 
+**See also:**
+
+* [File::Find](https://perldoc.perl.org/File::Find) — `find(sub { push @paths, $File::Find::name }, $dir)`.
+
 ## noenter (@filters)
 
 No enter to catalogs. Using in `find`. `@filters` same as in `find`.
@@ -140,6 +156,11 @@ eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy
 eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied
 ```
 
+**See also:**
+
+* [unlink](https://perldoc.perl.org/functions/unlink).
+* [File::Path](https://metacpan.org/pod/File::Path) — `remove_tree("dir")`.
+
 ## mkpath ($path)
 
 As **mkdir -p**, but consider last path-part (after last slash) as filename, and not create this catalog.
@@ -148,13 +169,20 @@ As **mkdir -p**, but consider last path-part (after last slash) as filename, and
 * If `$path` is array ref, then use path as first and permission as second element.
 * Default permission is `0755`.
 * Returns `$path`.
-cpanm --local-lib=~/perl5 local::lib && eval $(perl -I ~/perl5/lib/perl5/ -Mlocal::lib)
+
 ```perl
 local $_ = ["A", 0755];
 mkpath   # => A
 
-eval { mkpath "/A/" }; $@   # ~> mkpath : No such file or directory
+eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied
+
+mkpath "A///./file";
+-d "A"  # -> 1
 ```
+
+**See also:**
+
+* [File::Path](https://metacpan.org/pod/File::Path) — `mkpath("dir1/dir2")`.
 
 ## mtime ($file)
 
@@ -169,6 +197,12 @@ eval { mtime }; $@  # ~> mtime nofile: No such file or directory
 mtime ["/"]   # ~> ^\d+(\.\d+)?$
 ```
 
+**See also:**
+
+* [-M](https://perldoc.perl.org/functions/-X) — `-M "file.txt"`, `-M _` in days.
+* [stat](https://perldoc.perl.org/functions/stat) — `(stat "file.txt")[9]` in seconds.
+* [Time::HiRes](https://metacpan.org/pod/Time::HiRes) — `(Time::HiRes::stat "file.txt")[9]` in seconds with fractional part.
+
 ## replace (&sub, @files)
 
 Replacing each the file if `&sub` replace `$_`. Returns files in which there were no replacements.
@@ -181,6 +215,11 @@ lay "abc";
 replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
 cat  # => ¡bc
 ```
+
+**See also:**
+
+* [File::Edit](https://metacpan.org/pod/File::Edit).
+* [File::Edit::Portable](https://metacpan.org/pod/File::Edit::Portable).
 
 ## include ($pkg)
 
@@ -264,9 +303,27 @@ eval { goto_editor "`", 1 }; $@  # ~> `:1 --> 512
 
 Default the editor is `vscodium`.
 
+## from_pkg (;$pkg)
+
+From package to file path.
+
+```perl
+from_pkg "Aion::Fs"  # => Aion/Fs.pm
+[map from_pkg, "Aion::Fs", "A::B::C"]  # --> ["Aion/Fs.pm", "A/B/C.pm"]
+```
+
+## to_pkg (;$path)
+
+From file path to package.
+
+```perl
+to_pkg "Aion/Fs.pm"  # => Aion::Fs
+[map to_pkg, "Aion/Fs.md", "A/B/C.md"]  # --> ["Aion::Fs", "A::B::C"]
+```
+
 # AUTHOR
 
-Yaroslav O. Kosmina [dart@cpan.org](dart@cpan.org)
+Yaroslav O. Kosmina <dart@cpan.org>
 
 # LICENSE
 
