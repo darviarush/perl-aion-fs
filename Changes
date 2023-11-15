@@ -2,6 +2,10 @@ Revision history for Perl extension Aion::Fs
 
 {{$NEXT}}
 
+0.0.6 2023-11-15T09:59:00Z
+
+    - add unsupported os
+
 0.0.5 2023-11-15T09:28:51Z
 
     - fix pod

@@ -5,7 +5,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 # VERSION
 
-0.0.5
+0.0.6
 
 # SYNOPSIS
 
@@ -81,9 +81,9 @@ eval { cat "A" }; $@  # ~> cat A: No such file or directory
 
 **See also:**
 
-* [File::Slurp](https://metacpan.org/pod/File::Slurp) — `read_file('file.txt')`.
-* [File::Slurper](https://metacpan.org/pod/File::Slurper) — `read_text('file.txt')`, `read_binary('file.txt')`.
-* [IO::All](https://metacpan.org/dist/IO-All/view/lib/IO/All.pod) — `io('file.txt') > $contents`.
+* <File::Slurp> — `read_file('file.txt')`.
+* <File::Slurper> — `read_text('file.txt')`, `read_binary('file.txt')`.
+* <IO::All> — `io('file.txt') > $contents`.
 
 ## lay ($file, $content)
 
@@ -101,9 +101,9 @@ eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
 
 **See also:**
 
-* [File::Slurp](https://metacpan.org/pod/File::Slurp) — `write_file('file.txt', $contents)`.
-* [File::Slurper](https://metacpan.org/pod/File::Slurper) — `write_text('file.txt', $contents)`, `write_binary('file.txt', $contents)`.
-* [IO::All](https://metacpan.org/dist/IO-All/view/lib/IO/All.pod) — `io('file.txt') < $contents`.
+* <File::Slurp> — `write_file('file.txt', $contents)`.
+* <File::Slurper> — `write_text('file.txt', $contents)`, `write_binary('file.txt', $contents)`.
+* <IO::All> — `io('file.txt') < $contents`.
 
 ## find ($path, @filters)
 
@@ -137,7 +137,7 @@ eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find exampl
 
 **See also:**
 
-* [File::Find](https://perldoc.perl.org/File::Find) — `find(sub { push @paths, $File::Find::name }, $dir)`.
+* <File::Find> — `find(sub { push @paths, $File::Find::name }, $dir)`.
 
 ## noenter (@filters)
 
@@ -158,8 +158,8 @@ eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied
 
 **See also:**
 
-* [unlink](https://perldoc.perl.org/functions/unlink).
-* [File::Path](https://metacpan.org/pod/File::Path) — `remove_tree("dir")`.
+* <unlink>.
+* <File::Path> — `remove_tree("dir")`.
 
 ## mkpath ($path)
 
@@ -182,7 +182,7 @@ mkpath "A///./file";
 
 **See also:**
 
-* [File::Path](https://metacpan.org/pod/File::Path) — `mkpath("dir1/dir2")`.
+* <File::Path> — `mkpath("dir1/dir2")`.
 
 ## mtime ($file)
 
@@ -199,9 +199,9 @@ mtime ["/"]   # ~> ^\d+(\.\d+)?$
 
 **See also:**
 
-* [-M](https://perldoc.perl.org/functions/-X) — `-M "file.txt"`, `-M _` in days.
-* [stat](https://perldoc.perl.org/functions/stat) — `(stat "file.txt")[9]` in seconds.
-* [Time::HiRes](https://metacpan.org/pod/Time::HiRes) — `(Time::HiRes::stat "file.txt")[9]` in seconds with fractional part.
+* <-M> — `-M "file.txt"`, `-M _` in days.
+* <stat> — `(stat "file.txt")[9]` in seconds.
+* <Time::HiRes> — `(Time::HiRes::stat "file.txt")[9]` in seconds with fractional part.
 
 ## replace (&sub, @files)
 
@@ -218,8 +218,8 @@ cat  # => ¡bc
 
 **See also:**
 
-* [File::Edit](https://metacpan.org/pod/File::Edit).
-* [File::Edit::Portable](https://metacpan.org/pod/File::Edit::Portable).
+* <File::Edit>.
+* <File::Edit::Portable>.
 
 ## include ($pkg)
 
@@ -278,6 +278,11 @@ wildcard "?_??_**"  # \> (?^usn:^._[^/]_[^/]*?$)
 ```
 
 Using in filters the function `find`.
+
+**See also:**
+
+* <File::Wildcard>.
+* <String::Wildcard::Bash>.
 
 ## goto_editor ($path, $line)
 

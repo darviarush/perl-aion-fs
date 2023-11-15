@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.5";
+our $VERSION = "0.0.6";
 
 use Exporter qw/import/;
 use Scalar::Util qw//;
@@ -241,7 +241,7 @@ Aion::Fs - utilities for filesystem: read, write, find, replace files, etc
 
 =head1 VERSION
 
-0.0.5
+0.0.6
 
 =head1 SYNOPSIS
 
@@ -316,11 +316,11 @@ B<See also:>
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Slurp> — C<read_file('file.txt')>.
+=item * <File::Slurp> — C<read_file('file.txt')>.
 
-=item * LLL<https://metacpan.org/pod/File::Slurper> — C<read_text('file.txt')>, C<read_binary('file.txt')>.
+=item * <File::Slurper> — C<read_text('file.txt')>, C<read_binary('file.txt')>.
 
-=item * LLL<https://metacpan.org/dist/IO-All/view/lib/IO/All.pod> — C<< io('file.txt') E<gt> $contents >>.
+=item * <IO::All> — C<< io('file.txt') E<gt> $contents >>.
 
 =back
 
@@ -345,11 +345,11 @@ B<See also:>
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Slurp> — C<write_file('file.txt', $contents)>.
+=item * <File::Slurp> — C<write_file('file.txt', $contents)>.
 
-=item * LLL<https://metacpan.org/pod/File::Slurper> — C<write_text('file.txt', $contents)>, C<write_binary('file.txt', $contents)>.
+=item * <File::Slurper> — C<write_text('file.txt', $contents)>, C<write_binary('file.txt', $contents)>.
 
-=item * LLL<https://metacpan.org/dist/IO-All/view/lib/IO/All.pod> — C<< io('file.txt') E<lt> $contents >>.
+=item * <IO::All> — C<< io('file.txt') E<lt> $contents >>.
 
 =back
 
@@ -390,7 +390,7 @@ B<See also:>
 
 =over
 
-=item * LLL<https://perldoc.perl.org/File::Find> — C<find(sub { push @paths, $File::Find::name }, $dir)>.
+=item * <File::Find> — C<find(sub { push @paths, $File::Find::name }, $dir)>.
 
 =back
 
@@ -413,9 +413,9 @@ B<See also:>
 
 =over
 
-=item * LLL<https://perldoc.perl.org/functions/unlink>.
+=item * <unlink>.
 
-=item * LLL<https://metacpan.org/pod/File::Path> — C<remove_tree("dir")>.
+=item * <File::Path> — C<remove_tree("dir")>.
 
 =back
 
@@ -447,7 +447,7 @@ B<See also:>
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Path> — C<mkpath("dir1/dir2")>.
+=item * <File::Path> — C<mkpath("dir1/dir2")>.
 
 =back
 
@@ -466,11 +466,11 @@ B<See also:>
 
 =over
 
-=item * LLL<https://perldoc.perl.org/functions/-X> — C<-M "file.txt">, C<-M _> in days.
+=item * <-M> — C<-M "file.txt">, C<-M _> in days.
 
-=item * LLL<https://perldoc.perl.org/functions/stat> — C<(stat "file.txt")[9]> in seconds.
+=item * <stat> — C<(stat "file.txt")[9]> in seconds.
 
-=item * LLL<https://metacpan.org/pod/Time::HiRes> — C<(Time::HiRes::stat "file.txt")[9]> in seconds with fractional part.
+=item * <Time::HiRes> — C<(Time::HiRes::stat "file.txt")[9]> in seconds with fractional part.
 
 =back
 
@@ -489,9 +489,9 @@ B<See also:>
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Edit>.
+=item * <File::Edit>.
 
-=item * LLL<https://metacpan.org/pod/File::Edit::Portable>.
+=item * <File::Edit::Portable>.
 
 =back
 
@@ -557,6 +557,16 @@ Translate the wildcard to regexp.
 	wildcard "?_??_**"  # \> (?^usn:^._[^/]_[^/]*?$)
 
 Using in filters the function C<find>.
+
+B<See also:>
+
+=over
+
+=item * <File::Wildcard>.
+
+=item * <String::Wildcard::Bash>.
+
+=back
 
 =head2 goto_editor ($path, $line)
 
