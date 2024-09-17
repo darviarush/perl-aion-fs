@@ -177,18 +177,18 @@ sub path(;$) {
 	
 	($path) = @$path if ref $path;
 	
+	my $und = sub { $_[0] eq ""? undef: $_[0] };
+	
 	+{
 		path => $path,
 		UNIX? do {
-			$path =~ m{ ^
-				( (?<dir> /) | (?<dir> .*) / )?
-				(?<file>
-					(?<name> [^/\.]+ )?
-					( \. (?<ext> [^/]+)? )?
-				)
-				\z
-			}xsn;
-			(volume => undef, dir => undef, name => undef, ext => undef, %+, file => $+{file} eq ""? undef: $+{file})
+			my ($dir, $file, $name, $ext);
+			
+			if($path =~ m!/([^/]*)\z!) { $dir = length($`)? $`: "/"; $file = $1 } else { $file = $path }
+			
+			if($file =~ /\./) { ($name, $ext) = ($`, $') } else { $name = $file }
+			
+			(volume => undef, dir => $und->($dir), file => $und->($file), name => $und->($name), ext => $und->($ext))
 		}: do {
 			my ($volume, $dir, $file) = File::Spec->splitpath($path);
 			my ($name, $ext) = $file =~ /\./? ($`, $'): $file;
@@ -196,8 +196,7 @@ sub path(;$) {
 			my @dirs = File::Spec->splitdir($dir);
 			pop @dirs;
 			$dir = File::Spec->catdir(@dirs);
-			
-			my $und = sub { $_[0] eq ""? undef: $_[0] };
+
 			(volume => $und->($volume), dir => $und->($dir), file => $und->($file), name => $und->($name), ext => $und->($ext))
 		},
 	}
