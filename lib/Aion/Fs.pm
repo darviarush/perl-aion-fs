@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.0.6";
+our $VERSION = "0.0.7";
 
 use Exporter qw/import/;
 use File::Spec     qw//;
@@ -362,7 +362,7 @@ Aion::Fs - utilities for the file system: reading, writing, searching, replacing
 
 =head1 VERSION
 
-0.0.6
+0.0.7
 
 =head1 SYNOPSIS
 
