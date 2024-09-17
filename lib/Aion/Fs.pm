@@ -15,6 +15,8 @@ our @EXPORT = our @EXPORT_OK = grep {
 } keys %Aion::Fs::;
 
 
+use constant UNIX => $^O =~ /^(?:aix|bsdos|darwin|dynixptx|freebsd|haiku|linux|hpux|irix|next|openbsd|dec_osf|svr4|sco_sv|unicos|unicosmk|unicos|solaris|sunos)\z/;
+
 # Из пакета в файловый путь
 sub from_pkg(;$) {
 	my ($pkg) = @_ == 0? $_: @_;
@@ -32,9 +34,8 @@ sub to_pkg(;$) {
 
 # Подключает модуль, если он ещё не подключён, и возвращает его
 sub include(;$) {
-	my ($pkg) = @_;
-	$pkg = $_ if @_ == 0;
-	return $pkg if $pkg->can("new");
+	my ($pkg) = @_ == 0? $_: @_;
+	return $pkg if $pkg->can("new") || $pkg->can("has");
 	my $path = from_pkg $pkg;
 	return $pkg if exists $INC{$path};
 	require $path;
@@ -45,8 +46,7 @@ sub include(;$) {
 use constant FILE_EXISTS => 17;
 use config   DIR_DEFAULT_PERMISSION => 0755;
 sub mkpath (;$) {
-	my ($path) = @_;
-	$path = $_ if @_ == 0;
+	my ($path) = @_ == 0? $_: @_;
 	
 	my $permission;
 	($path, $permission) = @$path if ref $path;
@@ -54,7 +54,7 @@ sub mkpath (;$) {
 	
 	local $!;
 	
-	if($^O =~ /^(?:aix|bsdos|darwin|dynixptx|freebsd|haiku|linux|hpux|irix|next|openbsd|dec_osf|svr4|sco_sv|unicos|unicosmk|unicos|solaris|sunos)\z/) {
+	if(UNIX) {
 		while($path =~ m!/!g) {
 			mkdir $`, $permission
 				or ($! != FILE_EXISTS? die "mkpath $`: $!": ())
@@ -80,8 +80,7 @@ sub mkpath (;$) {
 
 # Считывает файл
 sub cat(;$) {
-    my ($file) = @_;
-	$file = $_ if @_ == 0;
+    my ($file) = @_ == 0? $_: @_;
 	my $layer = ":utf8";
 	($file, $layer) = @$file if ref $file;
 	open my $f, "<$layer", $file or die "cat $file: $!";
@@ -105,21 +104,105 @@ sub lay ($;$) {
 # считать файл, если он ещё не был считан
 our %FILE_INC;
 sub catonce (;$) {
-	my ($file) = @_;
-	$file = $_ if @_ == 0;
+	my ($file) = @_ == 0? $_: @_;
 	die "catonce not use ref path!" if ref $file;
 	return undef if exists $FILE_INC{$file};
 	$FILE_INC{$file} = 1;
 	cat $file
 }
 
+use constant {
+	DEV_NO		=> 0,	# Номер устройства
+	INO_NO		=> 1,	# Номер inode
+	MODE_NO		=> 2,	# Режим файла (права доступа)
+	NLINK_NO	=> 3,	# Количество жестких ссылок
+	UID_NO		=> 4,	# Идентификатор пользователя-владельца
+	GID_NO		=> 5,	# Идентификатор группы-владельца
+	RDEV_NO		=> 6,	# Номер устройства (если это специальный файл)
+	SIZE_NO		=> 7,	# Размер файла в байтах
+	ATIME_NO	=> 8,	# Время последнего доступа
+	MTIME_NO	=> 9,	# Время последнего изменения
+	CTIME_NO	=> 10,	# Время последнего изменения inode
+	BLKSIZE_NO	=> 11,	# Размер блока ввода-вывода
+	BLOCKS_NO	=> 12,	# Количество выделенных блоков
+};
+
 # Вернуть время модификации файла
 sub mtime(;$) {
-	my ($file) = @_;
-	$file = $_ if @_ == 0;
+	my ($file) = @_ == 0? $_: @_;
 	($file) = @$file if ref $file;
-	(Time::HiRes::stat $file)[9] // die "mtime $file: $!"
+	(Time::HiRes::stat $file)[MTIME_NO] // die "mtime $file: $!"
 }
+
+# Информация о файле в виде хеша
+sub sta(;$) {
+	my ($path) = @_ == 0? $_: @_;
+	($path) = @$path if ref $path;
+	
+	my %sta = (path => $path);
+	@sta{qw/dev ino mode nlink uid gid rdev size atime mtime ctime blksize blocks/} = Time::HiRes::stat $path or die "sta $path: $!";
+	\%sta
+}
+
+# Выделяет в пути составляющие, а если получает хеш, то объединяет его в путь
+sub path(;$);
+sub path(;$) {
+	my ($path) = @_ == 0? $_: @_;
+	if(ref $path eq "HASH") {
+		my ($path, $volume, $dir, $file, $name, $ext) = @$path{qw/path volume dir file name ext/};
+		
+		if(defined $path) {
+			my $p = path $path;
+			$volume //= $p->{volume};
+			$dir    //= $p->{dir};
+			$file   //= $p->{file};
+			$name   //= $p->{name};
+			$ext    //= $p->{ext};
+		}
+
+		if(defined $file and (defined $name or defined $ext)) {
+			my ($n, $e) = $file =~ /\./? ($`, $'): $file;
+			$name //= $n;
+			$ext //= $e;
+		}
+		
+		$file = defined($ext)? "$name.$ext": $name;
+		
+		if(UNIX) {
+			return defined($dir)? join("", $dir, $dir =~ /\/\z/? (): "/", $file): $file;
+		}
+		
+		return File::Spec->catpath($volume, $dir, $file);
+	}
+	
+	($path) = @$path if ref $path;
+	
+	+{
+		path => $path,
+		UNIX? do {
+			$path =~ m{ ^
+				( (?<dir> /) | (?<dir> .*) / )?
+				(?<file>
+					(?<name> [^/\.]+ )?
+					( \. (?<ext> [^/]+)? )?
+				)??
+				\z
+			}xsn;
+			(volume => undef, dir => undef, file => undef, name => undef, ext => undef, %+)
+		}: do {
+			my ($volume, $dir, $file) = File::Spec->splitpath($path);
+			my ($name, $ext) = $file =~ /\./? ($`, $'): $file;
+			
+			my @dirs = File::Spec->splitdir($dir);
+			pop @dirs;
+			$dir = File::Spec->catdir(@dirs);
+			
+			my $und = sub { $_[0] eq ""? undef: $_[0] };
+			(volume => $und->($volume), dir => $und->($dir), file => $und->($file), name => $und->($name), ext => $und->($ext))
+		},
+	}
+}
+
 
 # Файловые фильтры
 sub _filters(@) {
@@ -149,36 +232,50 @@ sub find(;@) {
 			push @noenters, _filters @$ex;
 		}
 	}
-
+	
 	my @filters = _filters @_;
+	my $wantarray = wantarray;
 
-	my @ret;
-	local $_;
+	my @ret; my $count;
 
-    FILE: while(@$file) {
-		$_ = shift @$file;
+	eval {
+		local $_;
+		
+	    FILE: while(@$file) {
+			my $path = shift @$file;
 
-		for my $filter (@filters) {
-			goto DIR unless $filter->();
-		}
-
-		push @ret, $_ if defined wantarray;
-
-		DIR: if(-d) {
-			for my $noenter (@noenters) {
-				next FILE if $noenter->();
+			for my $filter (@filters) {
+				local $_ = $path;
+				goto DIR unless $filter->();
 			}
 
-			opendir my $dir, $_ or do { $errorenter->(); next FILE };
-			my @file;
-			while(my $f = readdir $dir) {
-				push @file, File::Spec->join($_, $f) if $f !~ /^\.{1,2}\z/;
+			# Не держим память, если это не нужно
+			if($wantarray) { push @ret, $path } else { $count++ }
+
+			DIR: if(-d $path) {
+				for my $noenter (@noenters) {
+					local $_ = $path;
+					next FILE if $noenter->();
+				}
+
+				opendir my $dir, $path or do { local $_ = $path; $errorenter->(); next FILE };
+				my @file;
+				while(my $f = readdir $dir) {
+					#use DDP; p my $x=["hi!", $path, $f, File::Spec->join($path, $f)];
+					push @file, File::Spec->join($path, $f) if $f !~ /^\.{1,2}\z/;
+				}
+				push @$file, sort @file;
+				closedir $dir;
 			}
-			push @$file, sort @file;
-			closedir $dir;
 		}
+		
+	};
+	
+	if($@) {
+		die if ref $@ ne "Aion::Fs::stop";
 	}
-	@ret
+
+	wantarray? @ret: $count
 }
 
 # Не входить в подкаталоги
@@ -189,6 +286,11 @@ sub noenter(@) {
 # Вызывается для всех ошибок ввода-вывода
 sub errorenter(&) {
 	bless shift, "Aion::Fs::errorenter"
+}
+
+# Останавливает find будучи вызван с одного из его фильтров, errorenter или noenter
+sub find_stop() {
+	die bless {}, "Aion::Fs::stop"
 }
 
 # Производит замену во всех указанных файлах. Возвращает файлы в которых замен не было
@@ -310,7 +412,7 @@ The C<IO::All> supermodule is not a competitor to C<Aion::Fs>, because uses an O
 
 =item * OOP - object-oriented programming.
 
-=item * FP – functional programming.
+=item * FP - functional programming.
 
 =back
 
@@ -332,7 +434,7 @@ C<cat> throws an exception if the I/O operation fails:
 
 	eval { cat "A" }; $@  # ~> cat A: No such file or directory
 
-B<See also:>
+B<Cm. Also:>
 
 =over
 
@@ -365,7 +467,7 @@ Writes C<$content> to C<$file>.
 	
 	eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory
 
-B<See also:>
+B<Cm. Also:>
 
 =over
 
@@ -407,14 +509,21 @@ If the -X filter is not a perl file function, an exception is thrown:
 
 In this example, C<find> cannot enter the subdirectory and passes an error to the C<errorenter> function (see below) with the C<$_> and C<$!> variables set (to the directory path and the OS error message).
 
+B<Attention!> If C<errorenter> is not specified, then all errors are B<ignored>!
+
 	mkpath ["example/", 0];
 	
-	[find "example"]    # --> ["example"]
+	[find "example"]                  # --> ["example"]
 	[find "example", noenter "-d"]    # --> ["example"]
 	
 	eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied
+	
+	mkpath for qw!ex/1/11 ex/1/12 ex/2/21 ex/2/22!;
+	
+	my $count = 0;
+	find "ex", sub { find_stop if ++$count == 3; 1}  # -> 2
 
-B<See also:>
+B<Cm. Also:>
 
 =over
 
@@ -488,6 +597,13 @@ Tells C<find> not to enter directories matching the filters behind it.
 
 Calls C<&block> for every error that occurs when a directory cannot be entered.
 
+=head2 find_stop ()
+
+Stops C<find> being called in one of its filters, C<errorenter> or C<noenter>.
+
+	my $count = 0;
+	find "ex", sub { find_stop if ++$count == 3; 1}  # -> 2
+
 =head2 erase (@paths)
 
 Removes files and empty directories. Returns C<@paths>. If there is an I/O error, it throws an exception.
@@ -495,7 +611,7 @@ Removes files and empty directories. Returns C<@paths>. If there is an I/O error
 	eval { erase "/" }; $@  # ~> erase dir /: Device or resource busy
 	eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied
 
-B<See also:>
+B<Cm. Also:>
 
 =over
 
@@ -503,60 +619,7 @@ B<See also:>
 
 =item * <File::Path> - C<remove_tree("dir")>.
 
-=back
-
-=head2 mkpath (;$path)
-
-Like B<mkdir -p>, but considers the last part of the path (after the last slash) to be a filename and does not create it as a directory. Without a parameter, uses C<$_>.
-
-=over
-
-=item * If C<$path> is not specified, use C<$_>.
-
-=item * If C<$path> is an array reference, then the path is used as the first element and rights as the second element.
-
-=item * The default permission is C<0755>.
-
-=item * Returns C<$path>.
-
-=back
-
-	local $_ = ["A", 0755];
-	mkpath   # => A
-	
-	eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied
-	
-	mkpath "A///./file";
-	-d "A"  # -> 1
-
-B<See also:>
-
-=over
-
-=item * <File::Path> - C<mkpath("dir1/dir2")>.
-
-=back
-
-=head2 mtime (;$file)
-
-Modification time of C<$file> in unixtime with fractional part (from C<Time::HiRes::stat>). Without a parameter, uses C<$_>.
-
-Throws an exception if the file does not exist or does not have permission:
-
-	local $_ = "nofile";
-	eval { mtime }; $@  # ~> mtime nofile: No such file or directory
-	
-	mtime ["/"]   # ~> ^\d+(\.\d+)?$
-
-B<See also:>
-
-=over
-
-=item * <-M> — C<-M "file.txt">, C<-M _> in days from the current time.
-
-=item * <stat> - C<(stat "file.txt")[9]> in seconds (unixtime).
-
-=item * <Time::HiRes> - C<(Time::HiRes::stat "file.txt")[9]> in seconds with fractional part.
+=item * <File::Path::Tiny> - C<File::Path::Tiny::rm($path)>. Does not throw exceptions.
 
 =back
 
@@ -585,7 +648,7 @@ In the example below, the file "replace.ex" is read by the C<:utf8> layer and wr
 	replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
 	cat  # => ¡bc
 
-B<See also:>
+B<Cm. Also:>
 
 =over
 
@@ -596,6 +659,154 @@ B<See also:>
 =item * <File::Replace>.
 
 =item * <File::Replace::Inplace>.
+
+=back
+
+=head2 mkpath (;$path)
+
+Like B<mkdir -p>, but considers the last part of the path (after the last slash) to be a filename and does not create it as a directory. Without a parameter, uses C<$_>.
+
+=over
+
+=item * If C<$path> is not specified, use C<$_>.
+
+=item * If C<$path> is an array reference, then the path is used as the first element and rights as the second element.
+
+=item * The default permission is C<0755>.
+
+=item * Returns C<$path>.
+
+=back
+
+	local $_ = ["A", 0755];
+	mkpath   # => A
+	
+	eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied
+	
+	mkpath "A///./file";
+	-d "A"  # -> 1
+
+B<Cm. Also:>
+
+=over
+
+=item * <File::Path> - C<mkpath("dir1/dir2")>.
+
+=item * <File::Path::Tiny> - C<File::Path::Tiny::mk($path)>. Does not throw exceptions.
+
+=back
+
+=head2 mtime (;$path)
+
+Modification time of C<$path> in unixtime with fractional part (from C<Time::HiRes::stat>). Without a parameter, uses C<$_>.
+
+Throws an exception if the file does not exist or does not have permission:
+
+	local $_ = "nofile";
+	eval { mtime }; $@  # ~> mtime nofile: No such file or directory
+	
+	mtime ["/"]   # ~> ^\d+(\.\d+)?$
+
+B<Cm. Also:>
+
+=over
+
+=item * C<-M> — C<-M "file.txt">, C<-M _> in days from the current time.
+
+=item * <stat> - C<(stat "file.txt")[9]> in seconds (unixtime).
+
+=item * <Time::HiRes> - C<(Time::HiRes::stat "file.txt")[9]> in seconds with fractional part.
+
+=back
+
+=head2 sta (;$path)
+
+Returns statistics about the file. Without a parameter, uses C<$_>.
+
+To be used with other file functions, it can receive a reference to an array from which it takes the first element as the file path.
+
+Throws an exception if the file does not exist or does not have permission:
+
+	local $_ = "nofile";
+	eval { sta }; $@  # ~> sta nofile: No such file or directory
+	
+	sta(["/"])->{ino} # ~> ^\d+$ 
+	sta(".")->{atime} # ~> ^\d+(\.\d+)?$
+
+B<Cm. Also:>
+
+=over
+
+=item * <Fcntl> – contains constants for mode recognition.
+
+=item * <BSD::stat> - optionally returns atime, ctime and mtime in nanoseconds, user flags and file generation number. Has an OOP interface.
+
+=item * <File::chmod> – C<chmod("o=,g-w","file1","file2")>, C<@newmodes = getchmod("+x","file1","file2")>.
+
+=item * <File::stat> – provides an OOP interface to stat.
+
+=item * <File::Stat::Bits> – similar to <Fcntl>.
+
+=item * <File::stat::Extra> – extends <File::stat> with methods to obtain information about the mode, and also reloads B<-X>, B<< <=> >>, B<cmp> and B<~~> operators and stringified.
+
+=item * <File::Stat::Ls> – returns the mode in the format of the ls utility.
+
+=item * <File::Stat::Moose> – OOP interface for Moose.
+
+=item * <File::Stat::OO> – provides an OOP interface to stat. Can return atime, ctime and mtime at once in C<DateTime>.
+
+=item * <File::Stat::Trigger> – monitors changes in file attributes.
+
+=item * <Linux::stat> – parses /proc/stat and returns additional information. However, it does not work on other OSes.
+
+=item * <Stat::lsMode> – returns the mode in the format of the ls utility.
+
+=item * <VMS::Stat> – returns VMS ACLs.
+
+=back
+
+=head2 path (;$path)
+
+Splits a file path into its components or assembles it from its components.
+
+=over
+
+=item * If it receives a reference to an array, it treats its first element as a path.
+
+=item * If it receives a link to a hash, it collects a path from it. Unfamiliar keys are simply ignored. Also ignores volume on UNIX.
+
+=item * The file system is not accessed.
+
+=back
+
+	path "."       # --> {path => ".", volume => undef, dir => undef, file => ".", name => undef, ext => undef}
+	path ["/"]     # --> {path => "/", volume => undef, dir => "/", file => undef, name => undef, ext => undef}
+	local $_ = "";
+	path           # --> {path => "", volume => undef, dir => undef, file => undef, name => undef, ext => undef}
+	path "a/b/c.ext.ly"   # --> {path => "a/b/c.ext.ly", volume => undef, dir => "a/b", file => "c.ext.ly", name => "c", ext => "ext.ly"}
+	
+	path +{dir  => "/", ext => "ext.ly"}    # => /.ext.ly
+	path +{file => "b.c", ext => "ly"}      # => b.ly
+	path +{path => "a/b/f.c", dir => "m"}   # => m/f.c
+	
+	local $_ = +{path => "a/b/f.c", dir => undef, ext => undef};
+	path             # => a/b/f.c
+	path +{path => "a/b/f.c", volume => "/x", dir => "m/y", file => "f.y", name => "j", ext => "ext"} # => m/y/j.ext
+	path +{path => "a/b/f.c", volume => "/x", dir =>  "/y", file => "f.y", name => "j", ext => "ext"} # => /y/j.ext
+
+B<Cm. Also:>
+
+=over
+
+=item * <File::Spec> – C<< ($volume, $directories, $file) = File::Spec-E<gt>splitpath($path) >>.
+
+=item * <File::Basename> – C<($name, $path, $suffix) = fileparse($fullname, @suffixlist)>.
+
+=item * <Path::Class::File> – C<< file('foo', 'bar.txt')-E<gt>is_absolute >>.
+
+=item * <Path::Extended::File> – C<< Path::Extended::File-E<gt>new('path/to/file')-E<gt>basename >>.
+
+=item * <Parse::Path> – C<< Parse::Path-E<gt>new(path =E<gt> 'gophers[0].food.count', style =E<gt> 'DZIL')-E<gt>push("chunk") >>. Works with paths as with arrays (C<push>, C<pop>, C<shift>, C<splice>). It also overloads comparison operators. It has styles: C<DZIL>, C<File::Unix>, C<File::Win32>, C<PerlClass> and C<PerlClassUTF8>.
 
 =back
 
@@ -670,7 +881,7 @@ Converts a file mask to a regular expression. Without a parameter, uses C<$_>.
 
 Used in filters of the C<find> function.
 
-B<See also:>
+B<Cm. Also:>
 
 =over
 

@@ -1,4 +1,4 @@
-use common::sense; use open qw/:std :utf8/;  use Carp qw//; use File::Basename qw//; use File::Slurper qw//; use File::Spec qw//; use File::Path qw//; use Scalar::Util qw//;  use Test::More 0.98;  BEGIN {     $SIG{__DIE__} = sub {         my ($s) = @_;         if(ref $s) {             $s->{STACKTRACE} = Carp::longmess "?" if "HASH" eq Scalar::Util::reftype $s;             die $s;         } else {             die Carp::longmess defined($s)? $s: "undef"         }     };      my $t = File::Slurper::read_text(__FILE__);     my $s =  '/tmp/.liveman/perl-aion-fs/aion!fs'    ;     File::Path::rmtree($s) if -e $s;     File::Path::mkpath($s);     chdir $s or die "chdir $s: $!";      while($t =~ /^#\@> (.*)\n((#>> .*\n)*)#\@< EOF\n/gm) {         my ($file, $code) = ($1, $2);         $code =~ s/^#>> //mg;         File::Path::mkpath(File::Basename::dirname($file));         File::Slurper::write_text($file, $code);     }  } # 
+use common::sense; use open qw/:std :utf8/;  use Carp qw//; use File::Basename qw//; use File::Find qw//; use File::Slurper qw//; use File::Spec qw//; use File::Path qw//; use Scalar::Util qw//;  use Test::More 0.98;  BEGIN {     $SIG{__DIE__} = sub {         my ($s) = @_;         if(ref $s) {             $s->{STACKTRACE} = Carp::longmess "?" if "HASH" eq Scalar::Util::reftype $s;             die $s;         } else {             die Carp::longmess defined($s)? $s: "undef"         }     };      my $t = File::Slurper::read_text(__FILE__);     my $s =  '/tmp/.liveman/perl-aion-fs/aion!fs'    ;     File::Find::find(sub { chmod 0700, $_ if !/^\.{1,2}\z/ }, $s), File::Path::rmtree($s) if -e $s;     File::Path::mkpath($s);     chdir $s or die "chdir $s: $!";      while($t =~ /^#\@> (.*)\n((#>> .*\n)*)#\@< EOF\n/gm) {         my ($file, $code) = ($1, $2);         $code =~ s/^#>> //mg;         File::Path::mkpath(File::Basename::dirname($file));         File::Slurper::write_text($file, $code);     }  } # 
 # # NAME
 # 
 # Aion::Fs - утилиты для файловой системы: чтение, запись, поиск, замена файлов и т.д.
@@ -53,7 +53,7 @@ erase reverse find "hello";
 # Супермодуль `IO::All` не является конкурентом `Aion::Fs`, т.к. использует ООП подход, а `Aion::Fs` – ФП.
 # 
 # * ООП — объектно-ориентированное программирование.
-# * ФП – функциональное программирование.
+# * ФП — функциональное программирование.
 # 
 # # SUBROUTINES/METHODS
 # 
@@ -79,7 +79,7 @@ lay "unicode.txt", "↯";
 ::like scalar do {eval { cat "A" }; $@}, qr!cat A: No such file or directory!, 'eval { cat "A" }; $@  # ~> cat A: No such file or directory';
 
 # 
-# **See also:**
+# **См. также:**
 # 
 # * <File::Slurp> — `read_file('file.txt')`.
 # * <File::Slurper> — `read_text('file.txt')`, `read_binary('file.txt')`.
@@ -101,7 +101,7 @@ done_testing; }; subtest 'lay ($file?, $content)' => sub {
 ::like scalar do {eval { lay "/", "↯" }; $@}, qr!lay /: Is a directory!, 'eval { lay "/", "↯" }; $@ # ~> lay /: Is a directory';
 
 # 
-# **See also:**
+# **См. также:**
 # 
 # * <File::Slurp> — `write_file('file.txt', $contents)`.
 # * <File::Slurper> — `write_text('file.txt', $contents)`, `write_binary('file.txt', $contents)`.
@@ -128,18 +128,25 @@ done_testing; }; subtest 'find (;$path, @filters)' => sub {
 ::like scalar do {eval { find "example", "-h" }; $@}, qr!Undefined subroutine &Aion::Fs::h called!, 'eval { find "example", "-h" }; $@   # ~> Undefined subroutine &Aion::Fs::h called';
 
 # 
-# В этом примере `find` не может войти в подкаталог и передаёт ошибку в функцию `errorenter` (см. ниже) с установленными переменными `$_` и `$!` (путём к каталогу и сообщением ОС об ошибке).
+# В этом примере `find` не может войти в подкаталог и передаёт ошибку в функцию `errorenter` (см. ниже) с установленными переменными `$_` и `$!` (путём к каталогу и сообщением ОС об ошибке). 
+# 
+# **Внимание!** Если `errorenter` не указана, то все ошибки **игнорируются**!
 # 
 
 mkpath ["example/", 0];
 
-::is_deeply scalar do {[find "example"]}, scalar do {["example"]}, '[find "example"]    # --> ["example"]';
+::is_deeply scalar do {[find "example"]}, scalar do {["example"]}, '[find "example"]                  # --> ["example"]';
 ::is_deeply scalar do {[find "example", noenter "-d"]}, scalar do {["example"]}, '[find "example", noenter "-d"]    # --> ["example"]';
 
 ::like scalar do {eval { find "example", errorenter { die "find $_: $!" } }; $@}, qr!find example: Permission denied!, 'eval { find "example", errorenter { die "find $_: $!" } }; $@   # ~> find example: Permission denied';
 
+mkpath for qw!ex/1/11 ex/1/12 ex/2/21 ex/2/22!;
+
+my $count = 0;
+::is scalar do {find "ex", sub { find_stop if ++$count == 3; 1}}, scalar do{2}, 'find "ex", sub { find_stop if ++$count == 3; 1}  # -> 2';
+
 # 
-# **See also:**
+# **См. также:**
 # 
 # * <AudioFile::Find> — ищет аудиофайлы в указанной директории. Позволяет фильтровать их по атрибутам: названию, артисту, жанру, альбому и трэку.
 # * <Directory::Iterator> — `$it = Directory::Iterator->new($dir, %opts); push @paths, $_ while <$it>`.
@@ -180,6 +187,15 @@ mkpath ["example/", 0];
 # 
 # Вызывает `&block` для каждой ошибки возникающей при невозможности войти в какой-либо каталог.
 # 
+# ## find_stop ()
+# 
+# Останавливает `find` будучи вызван в одном из его фильтров, `errorenter` или `noenter`.
+# 
+done_testing; }; subtest 'find_stop ()' => sub { 
+my $count = 0;
+::is scalar do {find "ex", sub { find_stop if ++$count == 3; 1}}, scalar do{2}, 'find "ex", sub { find_stop if ++$count == 3; 1}  # -> 2';
+
+# 
 # ## erase (@paths)
 # 
 # Удаляет файлы и пустые каталоги. Возвращает `@paths`. При ошибке ввода-вывода выбрасывает исключение.
@@ -189,52 +205,11 @@ done_testing; }; subtest 'erase (@paths)' => sub {
 ::like scalar do {eval { erase "/dev/null" }; $@}, qr!erase file /dev/null: Permission denied!, 'eval { erase "/dev/null" }; $@  # ~> erase file /dev/null: Permission denied';
 
 # 
-# **See also:**
+# **См. также:**
 # 
 # * <unlink> + <rmdir>.
 # * <File::Path> — `remove_tree("dir")`.
-# 
-# ## mkpath (;$path)
-# 
-# Как **mkdir -p**, но считает последнюю часть пути (после последней косой черты) именем файла и не создаёт её каталогом. Без параметра использует `$_`.
-# 
-# * Если `$path` не указан, использует `$_`.
-# * Если `$path` является ссылкой на массив, тогда используется путь в качестве первого элемента и права в качестве второго элемента.
-# * Права по умолчанию — `0755`.
-# * Возвращает `$path`.
-# 
-done_testing; }; subtest 'mkpath (;$path)' => sub { 
-local $_ = ["A", 0755];
-::is scalar do {mkpath}, "A", 'mkpath   # => A';
-
-::like scalar do {eval { mkpath "/A/" }; $@}, qr!mkpath /A: Permission denied!, 'eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied';
-
-mkpath "A///./file";
-::is scalar do {-d "A"}, scalar do{1}, '-d "A"  # -> 1';
-
-# 
-# **See also:**
-# 
-# * <File::Path> — `mkpath("dir1/dir2")`.
-# 
-# ## mtime (;$file)
-# 
-# Время модификации `$file` в unixtime с дробной частью (из `Time::HiRes::stat`). Без параметра использует `$_`.
-# 
-# Выбрасывает исключение, если файл не существует или нет прав:
-# 
-done_testing; }; subtest 'mtime (;$file)' => sub { 
-local $_ = "nofile";
-::like scalar do {eval { mtime }; $@}, qr!mtime nofile: No such file or directory!, 'eval { mtime }; $@  # ~> mtime nofile: No such file or directory';
-
-::like scalar do {mtime ["/"]}, qr!^\d+(\.\d+)?$!, 'mtime ["/"]   # ~> ^\d+(\.\d+)?$';
-
-# 
-# **See also:**
-# 
-# * <-M> — `-M "file.txt"`, `-M _` в днях от текущего времени.
-# * <stat> — `(stat "file.txt")[9]` в секундах (unixtime).
-# * <Time::HiRes> — `(Time::HiRes::stat "file.txt")[9]` в секундах с дробной частью.
+# * <File::Path::Tiny> — `File::Path::Tiny::rm($path)`. Не выбрасывает исключений.
 # 
 # ## replace (&sub, @files)
 # 
@@ -257,12 +232,120 @@ replace { $b = ":utf8"; y/a/¡/ } [$_, ":raw"];
 ::is scalar do {cat}, "¡bc", 'cat  # => ¡bc';
 
 # 
-# **See also:**
+# **См. также:**
 # 
 # * <File::Edit>.
 # * <File::Edit::Portable>.
 # * <File::Replace>.
 # * <File::Replace::Inplace>.
+# 
+# ## mkpath (;$path)
+# 
+# Как **mkdir -p**, но считает последнюю часть пути (после последней косой черты) именем файла и не создаёт её каталогом. Без параметра использует `$_`.
+# 
+# * Если `$path` не указан, использует `$_`.
+# * Если `$path` является ссылкой на массив, тогда используется путь в качестве первого элемента и права в качестве второго элемента.
+# * Права по умолчанию — `0755`.
+# * Возвращает `$path`.
+# 
+done_testing; }; subtest 'mkpath (;$path)' => sub { 
+local $_ = ["A", 0755];
+::is scalar do {mkpath}, "A", 'mkpath   # => A';
+
+::like scalar do {eval { mkpath "/A/" }; $@}, qr!mkpath /A: Permission denied!, 'eval { mkpath "/A/" }; $@   # ~> mkpath /A: Permission denied';
+
+mkpath "A///./file";
+::is scalar do {-d "A"}, scalar do{1}, '-d "A"  # -> 1';
+
+# 
+# **См. также:**
+# 
+# * <File::Path> — `mkpath("dir1/dir2")`.
+# * <File::Path::Tiny> — `File::Path::Tiny::mk($path)`. Не выбрасывает исключений.
+# 
+# ## mtime (;$path)
+# 
+# Время модификации `$path` в unixtime с дробной частью (из `Time::HiRes::stat`). Без параметра использует `$_`.
+# 
+# Выбрасывает исключение, если файл не существует или нет прав:
+# 
+done_testing; }; subtest 'mtime (;$path)' => sub { 
+local $_ = "nofile";
+::like scalar do {eval { mtime }; $@}, qr!mtime nofile: No such file or directory!, 'eval { mtime }; $@  # ~> mtime nofile: No such file or directory';
+
+::like scalar do {mtime ["/"]}, qr!^\d+(\.\d+)?$!, 'mtime ["/"]   # ~> ^\d+(\.\d+)?$';
+
+# 
+# **См. также:**
+# 
+# * `-M` — `-M "file.txt"`, `-M _` в днях от текущего времени.
+# * <stat> — `(stat "file.txt")[9]` в секундах (unixtime).
+# * <Time::HiRes> — `(Time::HiRes::stat "file.txt")[9]` в секундах с дробной частью.
+# 
+# ## sta (;$path)
+# 
+# Возвращает статистику о файле. Без параметра использует `$_`.
+# 
+# Чтобы можно было использовать с другими файловыми функциями, может получать ссылку на массив из которого берёт первый элемент в качестве файлового пути.
+# 
+# Выбрасывает исключение, если файл не существует или нет прав:
+# 
+done_testing; }; subtest 'sta (;$path)' => sub { 
+local $_ = "nofile";
+::like scalar do {eval { sta }; $@}, qr!sta nofile: No such file or directory!, 'eval { sta }; $@  # ~> sta nofile: No such file or directory';
+
+::like scalar do {sta(["/"])->{ino}}, qr!^\d+$!, 'sta(["/"])->{ino} # ~> ^\d+$';
+::like scalar do {sta(".")->{atime}}, qr!^\d+(\.\d+)?$!, 'sta(".")->{atime} # ~> ^\d+(\.\d+)?$';
+
+# 
+# **См. также:**
+# 
+# * <Fcntl> – содержит константы для распознавания режима.
+# * <BSD::stat> – дополнительно возвращает atime, ctime и mtime в наносекундах, флаги пользователя и номер генерации файла. Имеет ООП-интерфейс.
+# * <File::chmod> – `chmod("o=,g-w","file1","file2")`, `@newmodes = getchmod("+x","file1","file2")`.
+# * <File::stat> – предоставляет ООП-интерфейс к stat.
+# * <File::Stat::Bits> – аналогичен <Fcntl>.
+# * <File::stat::Extra> – расширяет <File::stat> методами для получения информации о режиме, а так же перезагружает **-X**, **<=>**, **cmp** и **~~** операторы и стрингифицируется.
+# * <File::Stat::Ls> – возвращает режим в формате утилиты ls.
+# * <File::Stat::Moose> – ООП интерфейс на Moose.
+# * <File::Stat::OO> – предоставляет ООП-интерфейс к stat. Может возвращать atime, ctime и mtime сразу в `DateTime`.
+# * <File::Stat::Trigger> – следилка за изменением атрибутов файла.
+# * <Linux::stat> – парсит /proc/stat и возвращает доп-информацию. Однако в других ОС не работает.
+# * <Stat::lsMode> – возвращает режим в формате утилиты ls.
+# * <VMS::Stat> – возвращает списки VMS ACL.
+# 
+# ## path (;$path)
+# 
+# Разбивает файловый путь на составляющие или собирает его из составляющих.
+# 
+# * Если получает ссылку на массив, то воспринимает его первый элемент как путь.
+# * Если получает ссылку на хэш, то собирает из него путь. Незнакомые ключи просто игнорирует. Так же игнорирует volume в UNIX.
+# * К файловой системе не обращается.
+# 
+done_testing; }; subtest 'path (;$path)' => sub { 
+::is_deeply scalar do {path "."}, scalar do {{path => ".", volume => undef, dir => undef, file => ".", name => undef, ext => undef}}, 'path "."       # --> {path => ".", volume => undef, dir => undef, file => ".", name => undef, ext => undef}';
+::is_deeply scalar do {path ["/"]}, scalar do {{path => "/", volume => undef, dir => "/", file => undef, name => undef, ext => undef}}, 'path ["/"]     # --> {path => "/", volume => undef, dir => "/", file => undef, name => undef, ext => undef}';
+local $_ = "";
+::is_deeply scalar do {path}, scalar do {{path => "", volume => undef, dir => undef, file => undef, name => undef, ext => undef}}, 'path           # --> {path => "", volume => undef, dir => undef, file => undef, name => undef, ext => undef}';
+::is_deeply scalar do {path "a/b/c.ext.ly"}, scalar do {{path => "a/b/c.ext.ly", volume => undef, dir => "a/b", file => "c.ext.ly", name => "c", ext => "ext.ly"}}, 'path "a/b/c.ext.ly"   # --> {path => "a/b/c.ext.ly", volume => undef, dir => "a/b", file => "c.ext.ly", name => "c", ext => "ext.ly"}';
+
+::is scalar do {path +{dir  => "/", ext => "ext.ly"}}, "/.ext.ly", 'path +{dir  => "/", ext => "ext.ly"}    # => /.ext.ly';
+::is scalar do {path +{file => "b.c", ext => "ly"}}, "b.ly", 'path +{file => "b.c", ext => "ly"}      # => b.ly';
+::is scalar do {path +{path => "a/b/f.c", dir => "m"}}, "m/f.c", 'path +{path => "a/b/f.c", dir => "m"}   # => m/f.c';
+
+local $_ = +{path => "a/b/f.c", dir => undef, ext => undef};
+::is scalar do {path}, "a/b/f.c", 'path             # => a/b/f.c';
+::is scalar do {path +{path => "a/b/f.c", volume => "/x", dir => "m/y", file => "f.y", name => "j", ext => "ext"}}, "m/y/j.ext", 'path +{path => "a/b/f.c", volume => "/x", dir => "m/y", file => "f.y", name => "j", ext => "ext"} # => m/y/j.ext';
+::is scalar do {path +{path => "a/b/f.c", volume => "/x", dir =>  "/y", file => "f.y", name => "j", ext => "ext"}}, "/y/j.ext", 'path +{path => "a/b/f.c", volume => "/x", dir =>  "/y", file => "f.y", name => "j", ext => "ext"} # => /y/j.ext';
+
+# 
+# **См. также:**
+# 
+# * <File::Spec> – `($volume, $directories, $file) = File::Spec->splitpath($path)`.
+# * <File::Basename> – `($name, $path, $suffix) = fileparse($fullname, @suffixlist)`.
+# * <Path::Class::File> – `file('foo', 'bar.txt')->is_absolute`.
+# * <Path::Extended::File> – `Path::Extended::File->new('path/to/file')->basename`.
+# * <Parse::Path> – `Parse::Path->new(path => 'gophers[0].food.count', style => 'DZIL')->push("chunk")`. Работает с путями как с массивами (`push`, `pop`, `shift`, `splice`). Так же перегружает операторы сравнения. У него есть стили: `DZIL`, `File::Unix`, `File::Win32`, `PerlClass` и `PerlClassUTF8`.
 # 
 # ## include (;$pkg)
 # 
@@ -325,7 +408,7 @@ done_testing; }; subtest 'wildcard (;$wildcard)' => sub {
 # 
 # Используется в фильтрах функции `find`.
 # 
-# **See also:**
+# **См. также:**
 # 
 # * <File::Wildcard>.
 # * <String::Wildcard::Bash>.
