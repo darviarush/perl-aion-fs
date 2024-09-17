@@ -185,10 +185,10 @@ sub path(;$) {
 				(?<file>
 					(?<name> [^/\.]+ )?
 					( \. (?<ext> [^/]+)? )?
-				)??
+				)
 				\z
 			}xsn;
-			(volume => undef, dir => undef, file => undef, name => undef, ext => undef, %+)
+			(volume => undef, dir => undef, name => undef, ext => undef, %+, file => $+{file} eq ""? undef: $+{file})
 		}: do {
 			my ($volume, $dir, $file) = File::Spec->splitpath($path);
 			my ($name, $ext) = $file =~ /\./? ($`, $'): $file;
