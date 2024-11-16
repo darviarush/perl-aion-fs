@@ -82,8 +82,8 @@ eval { cat "A" }; $@  # ~> cat A: No such file or directory
 ### See also
 
 * <https://metacpan.org/pod/autodie> – `open $f, "r.txt"; $s = join "", <$f>; close $f`.
-* <File::Slurp> — `read_file('file.txt')`.
-* <File::Slurper> — `read_text('file.txt')`, `read_binary('file.txt')`.
+* <https://metacpan.org/pod/File::Slurp> — `read_file('file.txt')`.
+* <https://metacpan.org/pod/File::Slurper> — `read_text('file.txt')`, `read_binary('file.txt')`.
 * <File::Util> — `File::Util->new->load_file(file => 'file.txt')`.
 * <IO::All> — `io('file.txt') > $contents`.
 * <IO::Util> — `$contents = ${ slurp 'file.txt' }`.
