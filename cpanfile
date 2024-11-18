@@ -7,8 +7,8 @@ on 'develop' => sub {
 };
 
 on 'test' => sub {
-	requires 'Test::More', '0.98';
-	
+    requires 'Test::More', '0.98';
+
     requires 'Carp';
     requires 'common::sense';
     requires 'File::Basename';
@@ -18,8 +18,17 @@ on 'test' => sub {
     requires 'Scalar::Util';
 };
 
-requires 'config', '1.3';
 requires 'common::sense', '0';
+requires 'config', '1.3';
+requires 'constant', '1.33';
+requires 'diagnostics', '0';
+requires 'feature', '0';
+requires 'strict', '0';
+requires 'warnings', '1.70';
+requires 'Exporter', '5.78';
+requires 'File::Glob', '0';
 requires 'File::Spec', '0';
+requires 'File::Spec::Unix', '3.91';
+requires 'List::Util', '1.63';
 requires 'Scalar::Util', '0';
 requires 'Time::HiRes', '0';

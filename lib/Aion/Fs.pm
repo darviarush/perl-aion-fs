@@ -819,19 +819,19 @@ C<cat> вызывает исключение в случае ошибки опе
 
 =over
 
-=item * LLL<https://metacpan.org/pod/autodie> – C<< open $f, "r.txt"; $s = join "", E<lt>$fE<gt>; close $f >>.
+=item * L<autodie> – C<< open $f, "r.txt"; $s = join "", E<lt>$fE<gt>; close $f >>.
 
-=item * LL<https://metacpan.org/pod/File::Slurp> — C<read_file('file.txt')>.
+=item * L<File::Slurp> — C<read_file('file.txt')>.
 
-=item * LL<https://metacpan.org/pod/File::Slurper> — C<read_text('file.txt')>, C<read_binary('file.txt')>.
+=item * L<File::Slurper> — C<read_text('file.txt')>, C<read_binary('file.txt')>.
 
-=item * LLL<https://metacpan.org/pod/File::Util> — C<< File::Util-E<gt>new-E<gt>load_file(file =E<gt> 'file.txt') >>.
+=item * L<File::Util> — C<< File::Util-E<gt>new-E<gt>load_file(file =E<gt> 'file.txt') >>.
 
-=item * LLL<https://metacpan.org/pod/IO::All> — C<< io('file.txt') E<gt> $contents >>.
+=item * L<IO::All> — C<< io('file.txt') E<gt> $contents >>.
 
-=item * LLL<https://metacpan.org/pod/IO::Util> — C<$contents = ${ slurp 'file.txt' }>.
+=item * L<IO::Util> — C<$contents = ${ slurp 'file.txt' }>.
 
-=item * LLL<https://metacpan.org/pod/Mojo::File> – C<< path($file)-E<gt>slurp >>.
+=item * L<Mojo::File> – C<< path($file)-E<gt>slurp >>.
 
 =back
 
@@ -856,19 +856,19 @@ C<cat> вызывает исключение в случае ошибки опе
 
 =over
 
-=item * LLL<https://metacpan.org/pod/autodie> – C<< open $f, "E<gt>r.txt"; print $f $contents; close $f >>.
+=item * L<autodie> – C<< open $f, "E<gt>r.txt"; print $f $contents; close $f >>.
 
-=item * LLL<https://metacpan.org/pod/File::Slurp> — C<write_file('file.txt', $contents)>.
+=item * L<File::Slurp> — C<write_file('file.txt', $contents)>.
 
-=item * LLL<https://metacpan.org/pod/File::Slurper> — C<write_text('file.txt', $contents)>, C<write_binary('file.txt', $contents)>.
+=item * L<File::Slurper> — C<write_text('file.txt', $contents)>, C<write_binary('file.txt', $contents)>.
 
-=item * LLL<https://metacpan.org/pod/IO::All> — C<< io('file.txt') E<lt> $contents >>.
+=item * L<IO::All> — C<< io('file.txt') E<lt> $contents >>.
 
-=item * LLL<https://metacpan.org/pod/IO::Util> — C<slurp \$contents, 'file.txt'>.
+=item * L<IO::Util> — C<slurp \$contents, 'file.txt'>.
 
-=item * LLL<https://metacpan.org/pod/File::Util> — C<< File::Util-E<gt>new-E<gt>write_file(file =E<gt> 'file.txt', content =E<gt> $contents, bitmask =E<gt> 0644) >>.
+=item * L<File::Util> — C<< File::Util-E<gt>new-E<gt>write_file(file =E<gt> 'file.txt', content =E<gt> $contents, bitmask =E<gt> 0644) >>.
 
-=item * LLL<https://metacpan.org/pod/Mojo::File> – C<< path($file)-E<gt>spew($chars, 'UTF-8') >>.
+=item * L<Mojo::File> – C<< path($file)-E<gt>spew($chars, 'UTF-8') >>.
 
 =back
 
@@ -916,67 +916,67 @@ B<Внимание!> Если C<errorenter> не указана, то все о�
 
 =over
 
-=item * LLL<https://metacpan.org/pod/AudioFile::Find> — ищет аудиофайлы в указанной директории. Позволяет фильтровать их по атрибутам: названию, артисту, жанру, альбому и трэку.
+=item * L<AudioFile::Find> — ищет аудиофайлы в указанной директории. Позволяет фильтровать их по атрибутам: названию, артисту, жанру, альбому и трэку.
 
-=item * LLL<https://metacpan.org/pod/Directory::Iterator> — C<< $it = Directory::Iterator-E<gt>new($dir, %opts); push @paths, $_ while E<lt>$itE<gt> >>.
+=item * L<Directory::Iterator> — C<< $it = Directory::Iterator-E<gt>new($dir, %opts); push @paths, $_ while E<lt>$itE<gt> >>.
 
-=item * LLL<https://metacpan.org/pod/IO::All> — C<< @paths = map { "$_" } grep { -f $_ && $_-E<gt>size E<gt> 10*1024 } io(".")-E<gt>all(0) >>.
+=item * L<IO::All> — C<< @paths = map { "$_" } grep { -f $_ && $_-E<gt>size E<gt> 10*1024 } io(".")-E<gt>all(0) >>.
 
-=item * LLL<https://metacpan.org/pod/IO::All::Rule> — C<< $next = IO::All::Rule-E<gt>new-E<gt>file-E<gt>size("E<gt>10k")-E<gt>iter($dir1, $dir2); push @paths, "$f" while $f = $next-E<gt>() >>.
+=item * L<IO::All::Rule> — C<< $next = IO::All::Rule-E<gt>new-E<gt>file-E<gt>size("E<gt>10k")-E<gt>iter($dir1, $dir2); push @paths, "$f" while $f = $next-E<gt>() >>.
 
-=item * LLL<https://metacpan.org/pod/File::Find> — C<find( sub { push @paths, $File::Find::name if /\.png/ }, $dir )>.
+=item * L<File::Find> — C<find( sub { push @paths, $File::Find::name if /\.png/ }, $dir )>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::utf8> — как LLL<https://metacpan.org/pod/File::Find>, только пути файлов в I<utf8>.
+=item * L<File::Find::utf8> — как L<File::Find>, только пути файлов в I<utf8>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Age> — сортирует файлы по времени модификации (наследует LLL<https://metacpan.org/pod/File::Find::Rule>): C<< File::Find::Age-E<gt>in($dir1, $dir2) >>.
+=item * L<File::Find::Age> — сортирует файлы по времени модификации (наследует L<File::Find::Rule>): C<< File::Find::Age-E<gt>in($dir1, $dir2) >>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Declare> — C<< @paths = File::Find::Declare-E<gt>new({ size =E<gt> 'E<gt>10K', perms =E<gt> 'wr-wr-wr-', modified =E<gt> 'E<lt>2010-01-30', recurse =E<gt> 1, dirs =E<gt> [$dir1] })-E<gt>find >>.
+=item * L<File::Find::Declare> — C<< @paths = File::Find::Declare-E<gt>new({ size =E<gt> 'E<gt>10K', perms =E<gt> 'wr-wr-wr-', modified =E<gt> 'E<lt>2010-01-30', recurse =E<gt> 1, dirs =E<gt> [$dir1] })-E<gt>find >>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Iterator> — имеет ООП интерфейс с итератором и функции C<imap> и C<igrep>.
+=item * L<File::Find::Iterator> — имеет ООП интерфейс с итератором и функции C<imap> и C<igrep>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Match> — вызывает обработчик на каждый подошедший фильтр. Похож на C<switch>.
+=item * L<File::Find::Match> — вызывает обработчик на каждый подошедший фильтр. Похож на C<switch>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Node> — обходит иерархию файлов параллельно несколькими процессами: C<< tie @paths, IPC::Shareable, { key =E<gt> "GLUE STRING", create =E<gt> 1 }; File::Find::Node-E<gt>new(".")-E<gt>process(sub { my $f = shift; $f-E<gt>fork(5); tied(@paths)-E<gt>lock; push @paths, $f-E<gt>path; tied(@paths)-E<gt>unlock })-E<gt>find; tied(@paths)-E<gt>remove >>.
+=item * L<File::Find::Node> — обходит иерархию файлов параллельно несколькими процессами: C<< tie @paths, IPC::Shareable, { key =E<gt> "GLUE STRING", create =E<gt> 1 }; File::Find::Node-E<gt>new(".")-E<gt>process(sub { my $f = shift; $f-E<gt>fork(5); tied(@paths)-E<gt>lock; push @paths, $f-E<gt>path; tied(@paths)-E<gt>unlock })-E<gt>find; tied(@paths)-E<gt>remove >>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Fast> — C<@paths = @{ find($dir) }>.
+=item * L<File::Find::Fast> — C<@paths = @{ find($dir) }>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Object> — имеет ООП интерфейс с итератором.
+=item * L<File::Find::Object> — имеет ООП интерфейс с итератором.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Parallel> — умеет сравнивать два каталога и возвращать их объединение, пересечение и количественное пересечение.
+=item * L<File::Find::Parallel> — умеет сравнивать два каталога и возвращать их объединение, пересечение и количественное пересечение.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Random> — выбирает файл или директорию наугад из иерархии файлов.
+=item * L<File::Find::Random> — выбирает файл или директорию наугад из иерархии файлов.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Rex> — C<< @paths = File::Find::Rex-E<gt>new(recursive =E<gt> 1, ignore_hidden =E<gt> 1)-E<gt>query($dir, qr/^b/i) >>.
+=item * L<File::Find::Rex> — C<< @paths = File::Find::Rex-E<gt>new(recursive =E<gt> 1, ignore_hidden =E<gt> 1)-E<gt>query($dir, qr/^b/i) >>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Rule> — C<< @files = File::Find::Rule-E<gt>any( File::Find::Rule-E<gt>file-E<gt>name('*.mp3', '*.ogg')-E<gt>size('E<gt>2M'), File::Find::Rule-E<gt>empty )-E<gt>in($dir1, $dir2); >>. Имеет итератор, процедурный интерфейс и расширения L<File::Find::Rule::ImageSize> и L<File::Find::Rule::MMagic>: C<< @images = find(file =E<gt> magic =E<gt> 'image/*', '!image_x' =E<gt> 'E<gt>20', in =E<gt> '.') >>.
+=item * L<File::Find::Rule> — C<< @files = File::Find::Rule-E<gt>any( File::Find::Rule-E<gt>file-E<gt>name('*.mp3', '*.ogg')-E<gt>size('E<gt>2M'), File::Find::Rule-E<gt>empty )-E<gt>in($dir1, $dir2); >>. Имеет итератор, процедурный интерфейс и расширения L<File::Find::Rule::ImageSize> и L<File::Find::Rule::MMagic>: C<< @images = find(file =E<gt> magic =E<gt> 'image/*', '!image_x' =E<gt> 'E<gt>20', in =E<gt> '.') >>.
 
-=item * LLL<https://metacpan.org/pod/File::Find::Wanted> — C<@paths = find_wanted( sub { -f && /\.png/ }, $dir )>.
+=item * L<File::Find::Wanted> — C<@paths = find_wanted( sub { -f && /\.png/ }, $dir )>.
 
-=item * LLL<https://metacpan.org/pod/File::Hotfolder> — C<< watch( $dir, callback =E<gt> sub { push @paths, shift } )-E<gt>loop >>. Работает на C<AnyEvent>. Настраиваемый. Есть распараллеливание на несколько процессов.
+=item * L<File::Hotfolder> — C<< watch( $dir, callback =E<gt> sub { push @paths, shift } )-E<gt>loop >>. Работает на C<AnyEvent>. Настраиваемый. Есть распараллеливание на несколько процессов.
 
-=item * LLL<https://metacpan.org/pod/File::Mirror> — формирует так же параллельный путь для копирования файлов: C<recursive { my ($src, $dst) = @_; push @paths, $src } '/path/A', '/path/B'>.
+=item * L<File::Mirror> — формирует так же параллельный путь для копирования файлов: C<recursive { my ($src, $dst) = @_; push @paths, $src } '/path/A', '/path/B'>.
 
-=item * LLL<https://metacpan.org/pod/File::Set> — C<< $fs = File::Set-E<gt>new; $fs-E<gt>add($dir); @paths = map { $_-E<gt>[0] } $fs-E<gt>get_path_list >>.
+=item * L<File::Set> — C<< $fs = File::Set-E<gt>new; $fs-E<gt>add($dir); @paths = map { $_-E<gt>[0] } $fs-E<gt>get_path_list >>.
 
-=item * LLL<https://metacpan.org/pod/File::Wildcard> — C<< $fw = File::Wildcard-E<gt>new(exclude =E<gt> qr/.svn/, case_insensitive =E<gt> 1, sort =E<gt> 1, path =E<gt> "src///*.cpp", match =E<gt> qr(^src/(.*?)\.cpp$), derive =E<gt> ['src/$1.o','src/$1.hpp']); push @paths, $f while $f = $fw-E<gt>next >>.
+=item * L<File::Wildcard> — C<< $fw = File::Wildcard-E<gt>new(exclude =E<gt> qr/.svn/, case_insensitive =E<gt> 1, sort =E<gt> 1, path =E<gt> "src///*.cpp", match =E<gt> qr(^src/(.*?)\.cpp$), derive =E<gt> ['src/$1.o','src/$1.hpp']); push @paths, $f while $f = $fw-E<gt>next >>.
 
-=item * LLL<https://metacpan.org/pod/File::Wildcard::Find> — C<findbegin($dir); push @paths, $f while $f = findnext()> или  C<findbegin($dir); @paths = findall()>.
+=item * L<File::Wildcard::Find> — C<findbegin($dir); push @paths, $f while $f = findnext()> или  C<findbegin($dir); @paths = findall()>.
 
-=item * LLL<https://metacpan.org/pod/File::Util> — C<< File::Util-E<gt>new-E<gt>list_dir($dir, qw/ --pattern=\.txt$ --files-only --recurse /) >>.
+=item * L<File::Util> — C<< File::Util-E<gt>new-E<gt>list_dir($dir, qw/ --pattern=\.txt$ --files-only --recurse /) >>.
 
-=item * LLL<https://metacpan.org/pod/Mojo::File> – C<< say for path($path)-E<gt>list_tree({hidden =E<gt> 1, dir =E<gt> 1})-E<gt>each >>.
+=item * L<Mojo::File> – C<< say for path($path)-E<gt>list_tree({hidden =E<gt> 1, dir =E<gt> 1})-E<gt>each >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Find> — C<@paths = path_find( $dir, "*.png" )>. Для сложных запросов использует I<matchable>: C<< my $sub = matchable( sub { my( $entry, $directory, $fullname, $depth ) = @_; $depth E<lt>= 3 } >>.
+=item * L<Path::Find> — C<@paths = path_find( $dir, "*.png" )>. Для сложных запросов использует I<matchable>: C<< my $sub = matchable( sub { my( $entry, $directory, $fullname, $depth ) = @_; $depth E<lt>= 3 } >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Extended::Dir> — C<< @paths = Path::Extended::Dir-E<gt>new($dir)-E<gt>find('*.txt') >>.
+=item * L<Path::Extended::Dir> — C<< @paths = Path::Extended::Dir-E<gt>new($dir)-E<gt>find('*.txt') >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Iterator::Rule> — C<< $i = Path::Iterator::Rule-E<gt>new-E<gt>file; @paths = $i-E<gt>clone-E<gt>size("E<gt>10k")-E<gt>all(@dirs); $i-E<gt>size("E<lt>10k")... >>.
+=item * L<Path::Iterator::Rule> — C<< $i = Path::Iterator::Rule-E<gt>new-E<gt>file; @paths = $i-E<gt>clone-E<gt>size("E<gt>10k")-E<gt>all(@dirs); $i-E<gt>size("E<lt>10k")... >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Class::Each> — C<< dir($dir)-E<gt>each(sub { push @paths, "$_" }) >>.
+=item * L<Path::Class::Each> — C<< dir($dir)-E<gt>each(sub { push @paths, "$_" }) >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Class::Iterator> — C<< $i = Path::Class::Iterator-E<gt>new(root =E<gt> $dir, depth =E<gt> 2); until ($i-E<gt>done) { push @paths, $i-E<gt>next-E<gt>stringify } >>.
+=item * L<Path::Class::Iterator> — C<< $i = Path::Class::Iterator-E<gt>new(root =E<gt> $dir, depth =E<gt> 2); until ($i-E<gt>done) { push @paths, $i-E<gt>next-E<gt>stringify } >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Class::Rule> — C<< @paths = Path::Class::Rule-E<gt>new-E<gt>file-E<gt>size("E<gt>10k")-E<gt>all($dir) >>.
+=item * L<Path::Class::Rule> — C<< @paths = Path::Class::Rule-E<gt>new-E<gt>file-E<gt>size("E<gt>10k")-E<gt>all($dir) >>.
 
 =back
 
@@ -1008,11 +1008,11 @@ B<Внимание!> Если C<errorenter> не указана, то все о�
 
 =item * C<unlink> + C<rmdir>.
 
-=item * LLL<https://metacpan.org/pod/File::Path> — C<remove_tree("dir")>.
+=item * L<File::Path> — C<remove_tree("dir")>.
 
-=item * LLL<https://metacpan.org/pod/File::Path::Tiny> — C<File::Path::Tiny::rm($path)>. Не выбрасывает исключений.
+=item * L<File::Path::Tiny> — C<File::Path::Tiny::rm($path)>. Не выбрасывает исключений.
 
-=item * LLL<https://metacpan.org/pod/Mojo::File> – C<< path($file)-E<gt>remove >>.
+=item * L<Mojo::File> – C<< path($file)-E<gt>remove >>.
 
 =back
 
@@ -1045,13 +1045,13 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Edit> – C<< File::Edit-E<gt>new($file)-E<gt>replace('x', 'y')-E<gt>save >>.
+=item * L<File::Edit> – C<< File::Edit-E<gt>new($file)-E<gt>replace('x', 'y')-E<gt>save >>.
 
-=item * LLL<https://metacpan.org/pod/File::Edit::Portable> – C<< File::Edit::Portable-E<gt>new-E<gt>splice(file =E<gt> $file, line =E<gt> 10, contens =E<gt> ["line1", "line2"]) >>.
+=item * L<File::Edit::Portable> – C<< File::Edit::Portable-E<gt>new-E<gt>splice(file =E<gt> $file, line =E<gt> 10, contens =E<gt> ["line1", "line2"]) >>.
 
-=item * LLL<https://metacpan.org/pod/File::Replace> – C<< ($infh,$outfh,$repl) = replace3($file); while (E<lt>$infhE<gt>) { print $outfh "X: $_" } $repl-E<gt>finish >>.
+=item * L<File::Replace> – C<< ($infh,$outfh,$repl) = replace3($file); while (E<lt>$infhE<gt>) { print $outfh "X: $_" } $repl-E<gt>finish >>.
 
-=item * LLL<https://metacpan.org/pod/File::Replace::Inplace>.
+=item * L<File::Replace::Inplace>.
 
 =back
 
@@ -1083,9 +1083,9 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Path> — C<mkpath("dir1/dir2")>.
+=item * L<File::Path> — C<mkpath("dir1/dir2")>.
 
-=item * LLL<https://metacpan.org/pod/File::Path::Tiny> — C<File::Path::Tiny::mk($path)>. Не выбрасывает исключений.
+=item * L<File::Path::Tiny> — C<File::Path::Tiny::mk($path)>. Не выбрасывает исключений.
 
 =back
 
@@ -1106,11 +1106,11 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =item * C<-M> — C<-M "file.txt">, C<-M _> в днях от текущего времени.
 
-=item * LLL<https://metacpan.org/pod/stat> — C<(stat "file.txt")[9]> в секундах (unixtime).
+=item * L<stat> — C<(stat "file.txt")[9]> в секундах (unixtime).
 
-=item * LLL<https://metacpan.org/pod/Time::HiRes> — C<(Time::HiRes::stat "file.txt")[9]> в секундах с дробной частью.
+=item * L<Time::HiRes> — C<(Time::HiRes::stat "file.txt")[9]> в секундах с дробной частью.
 
-=item * LLL<https://metacpan.org/pod/Mojo::File> — C<< path($file)-E<gt>stat-E<gt>mtime >>.
+=item * L<Mojo::File> — C<< path($file)-E<gt>stat-E<gt>mtime >>.
 
 =back
 
@@ -1132,31 +1132,31 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =over
 
-=item * LLL<https://metacpan.org/pod/Fcntl> – содержит константы для распознавания режима.
+=item * L<Fcntl> – содержит константы для распознавания режима.
 
-=item * LLL<https://metacpan.org/pod/BSD::stat> – дополнительно возвращает atime, ctime и mtime в наносекундах, флаги пользователя и номер генерации файла. Имеет ООП-интерфейс.
+=item * L<BSD::stat> – дополнительно возвращает atime, ctime и mtime в наносекундах, флаги пользователя и номер генерации файла. Имеет ООП-интерфейс.
 
-=item * LLL<https://metacpan.org/pod/File::chmod> – C<chmod("o=,g-w","file1","file2")>, C<@newmodes = getchmod("+x","file1","file2")>.
+=item * L<File::chmod> – C<chmod("o=,g-w","file1","file2")>, C<@newmodes = getchmod("+x","file1","file2")>.
 
-=item * LLL<https://metacpan.org/pod/File::stat> – предоставляет ООП-интерфейс к stat.
+=item * L<File::stat> – предоставляет ООП-интерфейс к stat.
 
-=item * LLL<https://metacpan.org/pod/File::Stat::Bits> – аналогичен LLL<https://metacpan.org/pod/Fcntl>.
+=item * L<File::Stat::Bits> – аналогичен L<Fcntl>.
 
-=item * LLL<https://metacpan.org/pod/File::stat::Extra> – расширяет LLL<https://metacpan.org/pod/File::stat> методами для получения информации о режиме, а так же перезагружает B<-X>, B<< <=> >>, B<cmp> и B<~~> операторы и стрингифицируется.
+=item * L<File::stat::Extra> – расширяет L<File::stat> методами для получения информации о режиме, а так же перезагружает B<-X>, B<< <=> >>, B<cmp> и B<~~> операторы и стрингифицируется.
 
-=item * LLL<https://metacpan.org/pod/File::Stat::Ls> – возвращает режим в формате утилиты ls.
+=item * L<File::Stat::Ls> – возвращает режим в формате утилиты ls.
 
-=item * LLL<https://metacpan.org/pod/File::Stat::Moose> – ООП интерфейс на Moose.
+=item * L<File::Stat::Moose> – ООП интерфейс на Moose.
 
-=item * LLL<https://metacpan.org/pod/File::Stat::OO> – предоставляет ООП-интерфейс к stat. Может возвращать atime, ctime и mtime сразу в C<DateTime>.
+=item * L<File::Stat::OO> – предоставляет ООП-интерфейс к stat. Может возвращать atime, ctime и mtime сразу в C<DateTime>.
 
-=item * LLL<https://metacpan.org/pod/File::Stat::Trigger> – следилка за изменением атрибутов файла.
+=item * L<File::Stat::Trigger> – следилка за изменением атрибутов файла.
 
-=item * LLL<https://metacpan.org/pod/Linux::stat> – парсит /proc/stat и возвращает доп-информацию. Однако в других ОС не работает.
+=item * L<Linux::stat> – парсит /proc/stat и возвращает доп-информацию. Однако в других ОС не работает.
 
-=item * LLL<https://metacpan.org/pod/Stat::lsMode> – возвращает режим в формате утилиты ls.
+=item * L<Stat::lsMode> – возвращает режим в формате утилиты ls.
 
-=item * LLL<https://metacpan.org/pod/VMS::Stat> – возвращает списки VMS ACL.
+=item * L<VMS::Stat> – возвращает списки VMS ACL.
 
 =back
 
@@ -1419,11 +1419,11 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =item * C<$^O> – суперглобальная переменная с названием текущей ОС.
 
-=item * LLL<https://metacpan.org/pod/Devel::CheckOS>, LLL<https://metacpan.org/pod/Perl::OSType> – определяют ОС.
+=item * L<Devel::CheckOS>, L<Perl::OSType> – определяют ОС.
 
-=item * LLL<https://metacpan.org/pod/Devel::AssertOS> – запрещает использовать модуль вне указанных ОС.
+=item * L<Devel::AssertOS> – запрещает использовать модуль вне указанных ОС.
 
-=item * LLL<https://metacpan.org/pod/System::Info> – информация об ОС, её версии, дистрибутиве, CPU и хосте.
+=item * L<System::Info> – информация об ОС, её версии, дистрибутиве, CPU и хосте.
 
 =back
 
@@ -1431,23 +1431,23 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Spec> – C<< ($volume, $directories, $file) = File::Spec-E<gt>splitpath($path) >>. Поддерживает только unix, win32, os/2, vms, cygwin и amigaos.
+=item * L<File::Spec> – C<< ($volume, $directories, $file) = File::Spec-E<gt>splitpath($path) >>. Поддерживает только unix, win32, os/2, vms, cygwin и amigaos.
 
-=item * LLL<https://metacpan.org/pod/File::Spec::Functions> – C<($volume, $directories, $file) = splitpath($path)>.
+=item * L<File::Spec::Functions> – C<($volume, $directories, $file) = splitpath($path)>.
 
-=item * LLL<https://metacpan.org/pod/File::Spec::Mac> – входит в LLL<https://metacpan.org/pod/File::Spec>, но не определяется им, поэтому приходится использовать отдельно. Для mac os по 9-ю версию.
+=item * L<File::Spec::Mac> – входит в L<File::Spec>, но не определяется им, поэтому приходится использовать отдельно. Для mac os по 9-ю версию.
 
-=item * LLL<https://metacpan.org/pod/File::Basename> – C<($name, $path, $suffix) = fileparse($fullname, @suffixlist)>.
+=item * L<File::Basename> – C<($name, $path, $suffix) = fileparse($fullname, @suffixlist)>.
 
-=item * LLL<https://metacpan.org/pod/Path::Class::File> – C<< file('foo', 'bar.txt')-E<gt>is_absolute >>.
+=item * L<Path::Class::File> – C<< file('foo', 'bar.txt')-E<gt>is_absolute >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Extended::File> – C<< Path::Extended::File-E<gt>new($file)-E<gt>basename >>.
+=item * L<Path::Extended::File> – C<< Path::Extended::File-E<gt>new($file)-E<gt>basename >>.
 
-=item * LLL<https://metacpan.org/pod/Mojo::File> – C<< path($file)-E<gt>extname >>.
+=item * L<Mojo::File> – C<< path($file)-E<gt>extname >>.
 
-=item * LLL<https://metacpan.org/pod/Path::Util> – C<$filename = basename($dir)>.
+=item * L<Path::Util> – C<$filename = basename($dir)>.
 
-=item * LLL<https://metacpan.org/pod/Parse::Path> – C<< Parse::Path-E<gt>new(path =E<gt> 'gophers[0].food.count', style =E<gt> 'DZIL')-E<gt>push("chunk") >>. Работает с путями как с массивами (C<push>, C<pop>, C<shift>, C<splice>). Так же перегружает операторы сравнения. У него есть стили: C<DZIL>, C<File::Unix>, C<File::Win32>, C<PerlClass> и C<PerlClassUTF8>.
+=item * L<Parse::Path> – C<< Parse::Path-E<gt>new(path =E<gt> 'gophers[0].food.count', style =E<gt> 'DZIL')-E<gt>push("chunk") >>. Работает с путями как с массивами (C<push>, C<pop>, C<shift>, C<splice>). Так же перегружает операторы сравнения. У него есть стили: C<DZIL>, C<File::Unix>, C<File::Win32>, C<PerlClass> и C<PerlClassUTF8>.
 
 =back
 
@@ -1573,11 +1573,11 @@ C<&sub> вызывается для каждого файла из C<@files>. В
 
 =over
 
-=item * LLL<https://metacpan.org/pod/File::Wildcard>.
+=item * L<File::Wildcard>.
 
-=item * LLL<https://metacpan.org/pod/String::Wildcard::Bash>.
+=item * L<String::Wildcard::Bash>.
 
-=item * LLL<https://metacpan.org/pod/Text::Glob> — C<glob_to_regex("*.{pm,pl}")>.
+=item * L<Text::Glob> — C<glob_to_regex("*.{pm,pl}")>.
 
 =back
 

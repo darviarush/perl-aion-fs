@@ -1,4 +1,4 @@
-!ru:en
+[![Actions Status](https://github.com/darviarush/perl-aion-fs/actions/workflows/test.yml/badge.svg)](https://github.com/darviarush/perl-aion-fs/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Aion-Fs.svg)](https://metacpan.org/release/Aion-Fs)
 # NAME
 
 Aion::Fs - утилиты для файловой системы: чтение, запись, поиск, замена файлов и т.д.
