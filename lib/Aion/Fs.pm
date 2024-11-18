@@ -3,7 +3,7 @@ use 5.22.0;
 no strict; no warnings; no diagnostics;
 use common::sense;
 
-our $VERSION = "0.1.0";
+our $VERSION = "0.1.2";
 
 use Exporter qw/import/;
 use File::Spec     qw//;
@@ -744,7 +744,7 @@ Aion::Fs - утилиты для файловой системы: чтение, 
 
 =head1 VERSION
 
-0.1.0
+0.1.2
 
 =head1 SYNOPSIS
 
